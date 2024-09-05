@@ -212,7 +212,11 @@ func Details(err error) *Detail {
 	}
 }
 
-func Join(errs []error, sep string) (result string) {
+func Join(errs []error, sep string) error {
+	return errors.New(JoinToString(errs, sep))
+}
+
+func JoinToString(errs []error, sep string) (result string) {
 	for i, err := range errs {
 		dt := Details(err)
 		result += dt.message
@@ -221,9 +225,5 @@ func Join(errs []error, sep string) (result string) {
 		}
 	}
 	return result
-}
 
-func JoinToErr(errs []error, sep string) error {
-	msg := Join(errs, sep)
-	return errors.New(msg)
 }
