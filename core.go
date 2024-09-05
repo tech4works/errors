@@ -222,3 +222,8 @@ func Join(errs []error, sep string) (result string) {
 	}
 	return result
 }
+
+func JoinToErr(errs []error, sep string) error {
+	msg := Join(errs, sep)
+	return errors.New(msg)
+}
