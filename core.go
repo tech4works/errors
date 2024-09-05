@@ -211,3 +211,14 @@ func Details(err error) *Detail {
 		stack:    stack,
 	}
 }
+
+func Join(errs []error, sep string) (result string) {
+	for i, err := range errs {
+		dt := Details(err)
+		result += dt.message
+		if i < len(errs)-1 {
+			result += sep
+		}
+	}
+	return result
+}
