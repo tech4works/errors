@@ -103,6 +103,12 @@ func toStringWithErr(a any) (string, error) {
 	case reflect.Ptr, reflect.Interface:
 		if reflectValue.IsNil() {
 			return "", errors.New("error convert to string, it is null")
+		} else if err, ok := a.(error); ok {
+			if IsDetailed(err) {
+				details := Details(err)
+				return details.Message(), nil
+			}
+			return err.Error(), nil
 		}
 		return toStringWithErr(reflectValue.Elem().Interface())
 	default:
