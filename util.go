@@ -54,7 +54,7 @@ func filterMsg(v ...any) []any {
 	for i, iv := range v {
 		ivError, ok := iv.(error)
 		if ok {
-			errDetail := Details(ivError)
+			errDetail := Wrap(ivError)
 			v[i] = errDetail.message
 		}
 	}
