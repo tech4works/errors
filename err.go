@@ -14,7 +14,7 @@ type Err struct {
 	stack    string
 }
 
-func New(args ...any) error {
+func New(args ...any) *Err {
 	msg := buildMessage(args...)
 	file, line, funcName := callerInfos(2)
 	stack := debug.Stack()
@@ -27,7 +27,7 @@ func New(args ...any) error {
 	}
 }
 
-func Newf(format string, args ...any) error {
+func Newf(format string, args ...any) *Err {
 	msg := buildMessageByFormat(format, args...)
 	file, line, funcName := callerInfos(2)
 	stack := debug.Stack()
@@ -40,7 +40,7 @@ func Newf(format string, args ...any) error {
 	}
 }
 
-func NewSkipCaller(skipCaller int, args ...any) error {
+func NewSkipCaller(skipCaller int, args ...any) *Err {
 	msg := buildMessage(args...)
 	file, line, funcName := callerInfos(skipCaller + 1)
 	stack := debug.Stack()
@@ -53,7 +53,7 @@ func NewSkipCaller(skipCaller int, args ...any) error {
 	}
 }
 
-func NewSkipCallerf(skipCaller int, format string, args ...any) error {
+func NewSkipCallerf(skipCaller int, format string, args ...any) *Err {
 	msg := buildMessageByFormat(format, args...)
 	file, line, funcName := callerInfos(skipCaller + 1)
 	stack := debug.Stack()
