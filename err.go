@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"strconv"
@@ -67,7 +68,7 @@ func NewSkipCallerf(skipCaller int, format string, args ...any) *Err {
 }
 
 func (e *Err) Error() string {
-	return fmt.Sprint("[CAUSE]: ", e.Cause(), " [STACK]: ", e.stack)
+	return fmt.Sprint("[CAUSE]: ", e.Cause().Error(), " [STACK]: ", e.stack)
 }
 
 func (e *Err) PrintStackTrace() {
@@ -78,8 +79,8 @@ func (e *Err) PrintCause() {
 	fmt.Print(e.Cause())
 }
 
-func (e *Err) Cause() string {
-	return fmt.Sprint("(", e.file, ":", e.line, ")", " ", e.funcName, ": ", e.message)
+func (e *Err) Cause() error {
+	return errors.New(fmt.Sprint("(", e.file, ":", e.line, ")", " ", e.funcName, ": ", e.message))
 }
 
 func (e *Err) Message() string {
