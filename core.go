@@ -2,6 +2,7 @@ package errors
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"runtime/debug"
 	"strings"
@@ -149,35 +150,44 @@ func IsDetailed(err error) bool {
 	return err != nil && regex.MatchString(err.Error())
 }
 
-// Details function extracts detailed information from an error
-//
-// This function works by extracting specific parts of the error message using regular expressions.
-// The details extracted include the file name, line number, function name, the error message, and a debug stack trace.
-// If the error does not match the expected format, the function uses runtime.Caller and debug.Stack to get the
-// file info and debug stack, and creates an error message using buildMessage function. It then creates a new Detail object
-// with these details and returns it. If the provided error is nil, function simply returns nil.
-//
-// Parameters:
-//   - err: The error from which the details are to be extracted
-//
-// Returns:
-//   - *Detail: A pointer to a Detail struct containing error details. Returns nil if the provided error is nil.
-//
-// Example:
-//
-//	package main
-//
-//	import (
-//		"errors"
-//		"fmt"
-//	)
-//
-//	func main() {
-//		err := errors.New("test error")
-//		detail := Details(err)
-//		fmt.Println(detail.Message()) // Outputs: test error
-//	}
-func Details(err error) *Detail {
+func Details(err error, msg ...any) *Detail {
+	details := extractDetails(err, 3)
+	if details == nil {
+		return nil
+	} else if len(msg) == 0 {
+		return details
+	}
+	details.message = fmt.Sprintf("%s: %s", buildMessage(msg...), details.message)
+	return details
+}
+
+func Detailsf(err error, format string, msg ...any) *Detail {
+	details := extractDetails(err, 3)
+	if details == nil {
+		return nil
+	}
+
+	details.message = fmt.Sprintf("%s: %s", buildMessageByFormat(format, msg...), details.message)
+	return details
+}
+
+func Join(errs []error, sep string) error {
+	return errors.New(JoinToString(errs, sep))
+}
+
+func JoinToString(errs []error, sep string) (result string) {
+	for i, err := range errs {
+		dt := Details(err)
+		result += dt.message
+		if i < len(errs)-1 {
+			result += sep
+		}
+	}
+	return result
+
+}
+
+func extractDetails(err error, skip int) *Detail {
 	if err == nil {
 		return nil
 	}
@@ -198,7 +208,7 @@ func Details(err error) *Detail {
 		message = matches[4]
 		stack = matches[5]
 	} else {
-		file, line, funcName = callerInfos(2)
+		file, line, funcName = callerInfos(skip)
 		stack = string(debug.Stack())
 		message = buildMessage(err.Error())
 	}
@@ -210,20 +220,4 @@ func Details(err error) *Detail {
 		message:  message,
 		stack:    stack,
 	}
-}
-
-func Join(errs []error, sep string) error {
-	return errors.New(JoinToString(errs, sep))
-}
-
-func JoinToString(errs []error, sep string) (result string) {
-	for i, err := range errs {
-		dt := Details(err)
-		result += dt.message
-		if i < len(errs)-1 {
-			result += sep
-		}
-	}
-	return result
-
 }
