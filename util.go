@@ -85,12 +85,14 @@ func toStringWithErr(a any) (string, error) {
 	if reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
 		if reflectValue.IsNil() {
 			return "", errors.New("error convert to string, it is null")
+		} else if reflectValue.Type().Implements(reflect.TypeOf((fmt.Stringer)(nil))) {
+			return reflectValue.Interface().(fmt.Stringer).String(), nil
 		}
 		return toStringWithErr(reflectValue.Elem().Interface())
 	}
 
-	if stringer, ok := a.(fmt.Stringer); ok {
-		return stringer.String(), nil
+	if reflectValue.Type().Implements(reflect.TypeOf((fmt.Stringer)(nil))) {
+		return reflectValue.Interface().(fmt.Stringer).String(), nil
 	}
 
 	switch reflectValue.Kind() {
