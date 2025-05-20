@@ -85,13 +85,13 @@ func toStringWithErr(a any) (string, error) {
 	if reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
 		if reflectValue.IsNil() {
 			return "", errors.New("error convert to string, it is null")
-		} else if reflectValue.Type().Implements(reflect.TypeOf((fmt.Stringer)(nil))) {
+		} else if reflectValue.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
 			return reflectValue.Interface().(fmt.Stringer).String(), nil
 		}
 		return toStringWithErr(reflectValue.Elem().Interface())
 	}
 
-	if reflectValue.Type().Implements(reflect.TypeOf((fmt.Stringer)(nil))) {
+	if reflectValue.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
 		return reflectValue.Interface().(fmt.Stringer).String(), nil
 	}
 
