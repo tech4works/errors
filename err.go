@@ -103,3 +103,7 @@ func (e *Err) Func() string {
 func (e *Err) Stack() string {
 	return e.stack
 }
+
+func (e *Err) String() string {
+	return e.Cause().Error()
+}
