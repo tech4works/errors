@@ -66,7 +66,15 @@ func WrapSkipCaller(err error, skip int, msg ...any) *Err {
 	e := extract(err, skip)
 	if e == nil {
 		return nil
-	} else if len(msg) == 0 {
+	}
+
+	file, line, funcName := callerInfos(skip)
+	e.file = file
+	e.line = line
+	e.funcName = funcName
+	e.stack = string(debug.Stack())
+
+	if len(msg) == 0 {
 		return e
 	}
 	e.message = fmt.Sprintf("%s err: %s", buildMessage(msg...), e.message)
@@ -77,7 +85,14 @@ func WrapSkipCallerf(err error, skip int, format string, msg ...any) *Err {
 	e := extract(err, skip)
 	if e == nil {
 		return nil
-	} else if len(msg) == 0 {
+	}
+
+	file, line, funcName := callerInfos(skip)
+	e.file = file
+	e.line = line
+	e.funcName = funcName
+	e.stack = string(debug.Stack())
+	if len(msg) == 0 {
 		return e
 	}
 	e.message = fmt.Sprintf("%s err: %s", buildMessageByFormat(format, msg...), e.message)
