@@ -58,7 +58,7 @@ func Wrap(err error, msg ...any) *Err {
 	} else if len(msg) == 0 {
 		return e
 	}
-	e.message = fmt.Sprintf("%s: %s", buildMessage(msg...), e.message)
+	e.message = fmt.Sprintf("%s err: %s", buildMessage(msg...), e.message)
 	return e
 }
 
@@ -68,7 +68,7 @@ func Wrapf(err error, format string, msg ...any) *Err {
 		return nil
 	}
 
-	details.message = fmt.Sprintf("%s: %s", buildMessageByFormat(format, msg...), details.message)
+	details.message = fmt.Sprintf("%s err: %s", buildMessageByFormat(format, msg...), details.message)
 	return details
 }
 
