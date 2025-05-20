@@ -62,14 +62,36 @@ func Wrap(err error, msg ...any) *Err {
 	return e
 }
 
+func WrapSkipCaller(err error, skip int, msg ...any) *Err {
+	e := extract(err, skip)
+	if e == nil {
+		return nil
+	} else if len(msg) == 0 {
+		return e
+	}
+	e.message = fmt.Sprintf("%s err: %s", buildMessage(msg...), e.message)
+	return e
+}
+
+func WrapSkipCallerf(err error, skip int, format string, msg ...any) *Err {
+	e := extract(err, skip)
+	if e == nil {
+		return nil
+	} else if len(msg) == 0 {
+		return e
+	}
+	e.message = fmt.Sprintf("%s err: %s", buildMessageByFormat(format, msg...), e.message)
+	return e
+}
+
 func Wrapf(err error, format string, msg ...any) *Err {
-	details := extract(err, 3)
-	if details == nil {
+	e := extract(err, 3)
+	if e == nil {
 		return nil
 	}
 
-	details.message = fmt.Sprintf("%s err: %s", buildMessageByFormat(format, msg...), details.message)
-	return details
+	e.message = fmt.Sprintf("%s err: %s", buildMessageByFormat(format, msg...), e.message)
+	return e
 }
 
 func Join(errs []error, sep string) error {
