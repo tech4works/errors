@@ -81,17 +81,18 @@ func toStringWithErr(a any) (string, error) {
 	}
 
 	reflectValue := reflect.ValueOf(a)
+	reflectType := reflectValue.Type()
 
 	if reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
 		if reflectValue.IsNil() {
 			return "", errors.New("error convert to string, it is null")
-		} else if reflectValue.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
+		} else if implementsStringer(reflectType) {
 			return reflectValue.Interface().(fmt.Stringer).String(), nil
 		}
 		return toStringWithErr(reflectValue.Elem().Interface())
 	}
 
-	if reflectValue.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
+	if implementsStringer(reflectType) {
 		return reflectValue.Interface().(fmt.Stringer).String(), nil
 	}
 
@@ -130,4 +131,11 @@ func toStringWithErr(a any) (string, error) {
 	default:
 		return "", fmt.Errorf("error convert to string, unsupported type %s", reflectValue.Kind().String())
 	}
+}
+
+func implementsStringer(reflectType reflect.Type) bool {
+	if reflectType == nil {
+		return false
+	}
+	return reflectType.Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem())
 }
