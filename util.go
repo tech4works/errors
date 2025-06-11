@@ -88,12 +88,16 @@ func toStringWithErr(a any) (string, error) {
 			return "", errors.New("error convert to string, it is null")
 		} else if implementsStringer(reflectType) {
 			return reflectValue.Interface().(fmt.Stringer).String(), nil
+		} else if implementsError(reflectType) {
+			return reflectValue.Interface().(error).Error(), nil
 		}
 		return toStringWithErr(reflectValue.Elem().Interface())
 	}
 
 	if implementsStringer(reflectType) {
 		return reflectValue.Interface().(fmt.Stringer).String(), nil
+	} else if implementsError(reflectType) {
+		return reflectValue.Interface().(error).Error(), nil
 	}
 
 	switch reflectValue.Kind() {
@@ -138,4 +142,11 @@ func implementsStringer(reflectType reflect.Type) bool {
 		return false
 	}
 	return reflectType.Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem())
+}
+
+func implementsError(reflectType reflect.Type) bool {
+	if reflectType == nil {
+		return false
+	}
+	return reflectType.Implements(reflect.TypeOf((*error)(nil)).Elem())
 }
