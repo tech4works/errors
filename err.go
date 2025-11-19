@@ -198,11 +198,11 @@ func (e *Err) Error() string {
 }
 
 func (e *Err) PrintStackTrace() {
-	fmt.Print(e.stack)
+	fmt.Println(e.stack)
 }
 
 func (e *Err) PrintCause() {
-	fmt.Print(e.Cause())
+	fmt.Println(e.Cause())
 }
 
 func (e *Err) Cause() error {
