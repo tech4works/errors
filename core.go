@@ -17,12 +17,12 @@ const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 func Is(err, target error) bool {
 	if Match(err) {
 		wrapped := Wrap(err)
-		err = errors.New(wrapped.Message())
+		err = errors.New(wrapped.Simple())
 	}
 
 	if Match(target) {
 		wrapped := Wrap(target)
-		target = errors.New(wrapped.Message())
+		target = errors.New(wrapped.Simple())
 	}
 
 	return err != nil && target != nil && err.Error() == target.Error()
@@ -35,12 +35,16 @@ func IsNot(err, target error) bool {
 func Contains(err, target error) bool {
 	if Match(err) {
 		errDetails := Wrap(err)
-		err = errors.New(errDetails.Message())
+		err = errors.New(errDetails.Simple())
 	}
 
 	if Match(target) {
 		errDetails := Wrap(target)
-		target = errors.New(errDetails.Message())
+		if len(errDetails.Code()) > 0 {
+			target = errors.New(errDetails.Code())
+		} else {
+			target = errors.New(errDetails.Message())
+		}
 	}
 
 	return err != nil && target != nil && strings.Contains(err.Error(), target.Error())

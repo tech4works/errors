@@ -238,6 +238,14 @@ func (e *Err) Stack() string {
 	return e.stack
 }
 
+func (e *Err) Simple() string {
+	s := e.Message()
+	if len(e.Code()) > 0 {
+		s = fmt.Sprintf("[CODE]: %s [MESSAGE]: %s", e.Code(), s)
+	}
+	return s
+}
+
 func (e *Err) String() string {
 	return e.Error()
 }
