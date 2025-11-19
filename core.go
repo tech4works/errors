@@ -25,7 +25,7 @@ func Is(err, target error) bool {
 		target = errors.New(wrapped.Simple())
 	}
 
-	return err != nil && target != nil && err.Error() == target.Error()
+	return err != nil && target != nil && (err.Error() == target.Error() || Contains(err, target))
 }
 
 func IsNot(err, target error) bool {
