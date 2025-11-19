@@ -25,33 +25,11 @@ func Is(err, target error) bool {
 		target = errors.New(wrapped.Simple())
 	}
 
-	return err != nil && target != nil && (err.Error() == target.Error() || Contains(err, target))
+	return err != nil && target != nil && (err.Error() == target.Error() || contains(err, target))
 }
 
 func IsNot(err, target error) bool {
 	return !Is(err, target)
-}
-
-func Contains(err, target error) bool {
-	if Match(err) {
-		errDetails := Wrap(err)
-		err = errors.New(errDetails.Simple())
-	}
-
-	if Match(target) {
-		errDetails := Wrap(target)
-		if len(errDetails.Code()) > 0 {
-			target = errors.New(errDetails.Code())
-		} else {
-			target = errors.New(errDetails.Message())
-		}
-	}
-
-	return err != nil && target != nil && strings.Contains(err.Error(), target.Error())
-}
-
-func NotContains(err, target error) bool {
-	return !Contains(err, target)
 }
 
 func Match(err error) bool {
@@ -131,6 +109,24 @@ func JoinToString(errs []error, sep string) (result string) {
 	}
 	return result
 
+}
+
+func contains(err, target error) bool {
+	if Match(err) {
+		errDetails := Wrap(err)
+		err = errors.New(errDetails.Simple())
+	}
+
+	if Match(target) {
+		errDetails := Wrap(target)
+		if len(errDetails.Code()) > 0 {
+			target = errors.New(errDetails.Code())
+		} else {
+			target = errors.New(errDetails.Message())
+		}
+	}
+
+	return err != nil && target != nil && strings.Contains(err.Error(), target.Error())
 }
 
 func extract(err error, skip int) *Err {
