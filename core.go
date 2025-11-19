@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -8,7 +9,10 @@ import (
 	"strings"
 )
 
-const regex = `\[CAUSE]: \(([^:]+):(\d+)\) ([^:]+): (.+?) \[STACK]:\s*([\s\S]+)`
+const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
+	`\[CAUSE]: \(([^:]+):(\d+)\) ([^:]+): (.+?)` + // 2: file, 3: line, 4: func, 5: msg
+	`(?: \[METADATA]: (.+?))?` + // 6: metadata (optional)
+	` \[STACK]:\s*([\s\S]+)$` // 7: stack
 
 func Is(err, target error) bool {
 	if Match(err) {
@@ -130,32 +134,46 @@ func extract(err error, skip int) *Err {
 		return nil
 	}
 
-	var file string
-	var line string
-	var funcName string
-	var message string
-	var stack string
-
 	rg := regexp.MustCompile(regex)
 	matches := rg.FindStringSubmatch(err.Error())
 
-	if len(matches) > 0 {
-		file = matches[1]
-		line = matches[2]
-		funcName = matches[3]
-		message = matches[4]
-		stack = matches[5]
-	} else {
-		file, line, funcName = callerInfos(skip)
-		stack = string(debug.Stack())
-		message = buildMessage(err.Error())
+	if len(matches) == 0 {
+		file, line, funcName := callerInfos(skip)
+		return &Err{
+			file:     file,
+			line:     line,
+			funcName: funcName,
+			message:  buildMessage(err.Error()),
+			stack:    string(debug.Stack()),
+		}
 	}
 
-	return &Err{
-		file:     file,
-		line:     line,
-		funcName: funcName,
-		message:  message,
-		stack:    stack,
+	e := &Err{
+		file:     matches[2],
+		line:     matches[3],
+		funcName: matches[4],
+		message:  matches[5],
+		stack:    matches[7],
 	}
+
+	// code opcional
+	if matches[1] != "" {
+		e.code = matches[1]
+	}
+
+	// metadata opcional
+	if matches[6] != "" {
+		metaStr := matches[6]
+
+		var meta map[string]any
+		if err := json.Unmarshal([]byte(metaStr), &meta); err == nil {
+			e.metadata = meta
+		} else {
+			e.metadata = map[string]any{
+				"raw": metaStr,
+			}
+		}
+	}
+
+	return e
 }
