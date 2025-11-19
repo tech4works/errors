@@ -161,6 +161,17 @@ func NewWithSkipCallerWithCodef(skipCaller int, format, code string, msg ...any)
 	}
 }
 
+func NewWithSkipCallerf(skipCaller int, format string, msg ...any) *Err {
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    string(debug.Stack()),
+	}
+}
+
 func NewWithAllf(skipCaller int, format, code string, metadata map[string]any, msg ...any) *Err {
 	file, line, funcName := callerInfos(skipCaller + 1)
 	return &Err{
