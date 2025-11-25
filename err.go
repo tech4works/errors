@@ -185,6 +185,18 @@ func NewWithAllf(skipCaller int, format, code string, metadata map[string]any, m
 	}
 }
 
+func NewWithRawData(file, line, funcName, code, message string, metadata map[string]any, stack string) *Err {
+	return &Err{
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  message,
+		metadata: metadata,
+		stack:    stack,
+	}
+}
+
 func (e *Err) Error() string {
 	var code string
 	if len(e.Code()) > 0 {
