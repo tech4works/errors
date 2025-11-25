@@ -46,6 +46,9 @@ func Inherit(err error, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
+		if len(e.Message()) == 0 {
+			e.message = parent.message
+		}
 		e.code = parent.code
 		e.metadata = parent.metadata
 		e.stack = inheritsStackWithError(parent, e.stack)
@@ -62,6 +65,9 @@ func Inheritf(err error, format string, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
+		if len(e.Message()) == 0 {
+			e.message = parent.message
+		}
 		e.code = parent.code
 		e.metadata = parent.metadata
 		e.stack = inheritsStackWithError(parent, e.stack)
@@ -78,6 +84,9 @@ func InheritWithSkipCaller(err error, skipCaller int, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
+		if len(e.Message()) == 0 {
+			e.message = parent.message
+		}
 		e.code = parent.code
 		e.metadata = parent.metadata
 		e.stack = inheritsStackWithError(parent, e.stack)
@@ -94,6 +103,9 @@ func InheritWithCode(err error, code string, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
+		if len(e.Message()) == 0 {
+			e.message = parent.message
+		}
 		e.metadata = parent.metadata
 		e.stack = inheritsStackWithError(parent, e.stack)
 	}
@@ -109,6 +121,9 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 
 	extracted, parent := extract(err, 3)
 	if extracted {
+		if len(e.Message()) == 0 {
+			e.message = parent.message
+		}
 		e.code = parent.code
 		e.metadata = parent.metadata
 		e.stack = inheritsStackWithError(parent, e.stack)
