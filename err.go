@@ -238,7 +238,7 @@ func (e *Err) Stack() string {
 	return e.stack
 }
 
-func (e *Err) Simple() string {
+func (e *Err) Snapshot() string {
 	s := e.Message()
 	if len(e.Code()) > 0 {
 		s = fmt.Sprintf("[CODE]: %s [MESSAGE]: %s", e.Code(), s)
