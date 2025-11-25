@@ -131,6 +131,25 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 	return e
 }
 
+func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ...any) *Err {
+	if err == nil {
+		return nil
+	}
+
+	e := NewWithSkipCallerAndCode(skipCaller, code, msg...)
+
+	extracted, parent := extract(err, 3)
+	if extracted {
+		if len(e.Message()) == 0 {
+			e.message = parent.message
+		}
+		e.code = parent.code
+		e.metadata = parent.metadata
+		e.stack = inheritsStackWithError(parent, e.stack)
+	}
+	return e
+}
+
 func Wrap(err error, msg ...any) *Err {
 	extracted, e := extract(err, 3)
 	if e == nil {
