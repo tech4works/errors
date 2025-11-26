@@ -15,6 +15,10 @@ const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 	` \[STACK]:\s*([\s\S]+)$` // 7: stack
 
 func Is(err, target error) bool {
+	if err == nil || target == nil {
+		return false
+	}
+
 	errString := err.Error()
 	if Match(err) {
 		wrapped := Wrap(err)
@@ -27,7 +31,7 @@ func Is(err, target error) bool {
 		targetString = wrapped.Snapshot()
 	}
 
-	return err != nil && target != nil && (errString == targetString || contains(err, target))
+	return errString == targetString || contains(err, target)
 }
 
 func IsNot(err, target error) bool {
