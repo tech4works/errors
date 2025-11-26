@@ -15,17 +15,19 @@ const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 	` \[STACK]:\s*([\s\S]+)$` // 7: stack
 
 func Is(err, target error) bool {
+	errString := err.Error()
 	if Match(err) {
 		wrapped := Wrap(err)
-		err = errors.New(wrapped.Snapshot())
+		errString = wrapped.Snapshot()
 	}
 
+	targetString := target.Error()
 	if Match(target) {
 		wrapped := Wrap(target)
-		target = errors.New(wrapped.Snapshot())
+		targetString = wrapped.Snapshot()
 	}
 
-	return err != nil && target != nil && (err.Error() == target.Error() || contains(err, target))
+	return err != nil && target != nil && (errString == targetString || contains(err, target))
 }
 
 func IsNot(err, target error) bool {
@@ -250,21 +252,23 @@ func JoinToString(errs []error, sep string) (result string) {
 }
 
 func contains(err, target error) bool {
+	errString := err.Error()
 	if Match(err) {
 		errDetails := Wrap(err)
-		err = errors.New(errDetails.Snapshot())
+		errString = errDetails.Snapshot()
 	}
 
+	targetString := target.Error()
 	if Match(target) {
 		errDetails := Wrap(target)
 		if len(errDetails.Code()) > 0 {
-			target = errors.New(errDetails.Code())
+			targetString = errDetails.Code()
 		} else {
-			target = errors.New(errDetails.Message())
+			targetString = errDetails.Message()
 		}
 	}
 
-	return err != nil && target != nil && strings.Contains(err.Error(), target.Error())
+	return err != nil && target != nil && strings.Contains(errString, targetString)
 }
 
 func extract(err error, skip int) (bool, *Err) {
@@ -321,9 +325,9 @@ func inheritsMessage(e *Err, msg ...any) string {
 }
 
 func inheritsStack(e *Err, currentStack string) string {
-	return fmt.Sprintf("%s \n | inherited by: %s", currentStack, e.stack)
+	return fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, e.stack)
 }
 
 func inheritsStackWithError(e *Err, currentStack string) string {
-	return fmt.Sprintf("%s \n | inherited by: %s", currentStack, e.Error())
+	return fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, e.Error())
 }
