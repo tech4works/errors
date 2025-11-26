@@ -35,7 +35,11 @@ func buildMessage(v ...any) string {
 	for _, i := range v {
 		ss = append(ss, toString(i))
 	}
-	return cleanMessage(strings.TrimRight(fmt.Sprintln(ss...), "\n"))
+	message := cleanMessage(strings.TrimRight(fmt.Sprintln(ss...), "\n"))
+	if len(message) == 0 {
+		message = "<empty>"
+	}
+	return message
 }
 
 func buildMessageByFormat(format string, v ...any) string {
