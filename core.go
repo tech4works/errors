@@ -137,6 +137,28 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 	return e
 }
 
+func InheritWithAll(err error, skipCaller int, code string, metadata map[string]any, msg ...any) *Err {
+	if err == nil {
+		return nil
+	}
+
+	e := NewWithAll(skipCaller, code, metadata, msg...)
+
+	extracted, parent := extract(err, 3)
+	if extracted {
+		if e.Message() == "<empty>" {
+			e.message = parent.message
+		}
+		for k, v := range parent.metadata {
+			if _, exists := e.metadata[k]; !exists {
+				e.metadata[k] = v
+			}
+		}
+		e.stack = inheritsStackWithError(parent, e.stack)
+	}
+	return e
+}
+
 func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ...any) *Err {
 	if err == nil {
 		return nil
