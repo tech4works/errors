@@ -52,7 +52,7 @@ func Inherit(err error, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
-		if len(e.Message()) == 0 {
+		if e.Message() == "<empty>" {
 			e.message = parent.message
 		}
 		e.code = parent.code
@@ -71,7 +71,7 @@ func Inheritf(err error, format string, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
-		if len(e.Message()) == 0 {
+		if e.Message() == "<empty>" {
 			e.message = parent.message
 		}
 		e.code = parent.code
@@ -90,7 +90,7 @@ func InheritWithSkipCaller(err error, skipCaller int, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
-		if len(e.Message()) == 0 {
+		if e.Message() == "<empty>" {
 			e.message = parent.message
 		}
 		e.code = parent.code
@@ -109,7 +109,7 @@ func InheritWithCode(err error, code string, msg ...any) *Err {
 
 	extracted, parent := extract(err, 3)
 	if extracted {
-		if len(e.Message()) == 0 {
+		if e.Message() == "<empty>" {
 			e.message = parent.message
 		}
 		e.metadata = parent.metadata
@@ -127,7 +127,7 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 
 	extracted, parent := extract(err, 3)
 	if extracted {
-		if len(e.Message()) == 0 {
+		if e.Message() == "<empty>" {
 			e.message = parent.message
 		}
 		e.code = parent.code
@@ -146,7 +146,7 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 
 	extracted, parent := extract(err, 3)
 	if extracted {
-		if len(e.Message()) == 0 {
+		if e.Message() == "<empty>" {
 			e.message = parent.message
 		}
 		e.code = parent.code

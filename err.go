@@ -204,7 +204,7 @@ func (e *Err) Error() string {
 	}
 	var metadata string
 	if len(e.Metadata()) > 0 {
-		metadata = fmt.Sprintf("[METADATA]: %s", toString(e.Metadata()))
+		metadata = fmt.Sprintf(" [METADATA]: %s", toString(e.Metadata()))
 	}
 	return fmt.Sprint(code, "[CAUSE]: ", e.Cause().Error(), metadata, " [STACK]: ", e.Stack())
 }
