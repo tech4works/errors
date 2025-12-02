@@ -3,7 +3,6 @@ package errors
 import (
 	"errors"
 	"fmt"
-	"runtime/debug"
 	"strconv"
 )
 
@@ -24,7 +23,7 @@ func New(msg ...any) *Err {
 		line:     line,
 		funcName: funcName,
 		message:  buildMessage(msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -36,7 +35,7 @@ func NewWithCode(code string, msg ...any) *Err {
 		funcName: funcName,
 		code:     code,
 		message:  buildMessage(msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -48,7 +47,7 @@ func NewWithMetadata(metadata map[string]any, msg ...any) *Err {
 		funcName: funcName,
 		message:  buildMessage(msg...),
 		metadata: metadata,
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -61,7 +60,7 @@ func NewWithCodeAndMetadata(code string, metadata map[string]any, msg ...any) *E
 		code:     code,
 		message:  buildMessage(msg...),
 		metadata: metadata,
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -72,7 +71,7 @@ func Newf(format string, msg ...any) *Err {
 		line:     line,
 		funcName: funcName,
 		message:  buildMessageByFormat(format, msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -84,7 +83,7 @@ func NewWithCodef(format, code string, msg ...any) *Err {
 		funcName: funcName,
 		code:     code,
 		message:  buildMessageByFormat(format, msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -96,7 +95,7 @@ func NewWithMetadataf(format string, metadata map[string]any, msg ...any) *Err {
 		funcName: funcName,
 		message:  buildMessageByFormat(format, msg...),
 		metadata: metadata,
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -109,7 +108,7 @@ func NewWithCodeAndMetadataf(format, code string, metadata map[string]any, msg .
 		code:     code,
 		message:  buildMessageByFormat(format, msg...),
 		metadata: metadata,
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -120,7 +119,7 @@ func NewWithSkipCaller(skipCaller int, msg ...any) *Err {
 		line:     line,
 		funcName: funcName,
 		message:  buildMessage(msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -132,7 +131,7 @@ func NewWithSkipCallerAndCode(skipCaller int, code string, msg ...any) *Err {
 		funcName: funcName,
 		code:     code,
 		message:  buildMessage(msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -145,7 +144,7 @@ func NewWithAll(skipCaller int, code string, metadata map[string]any, msg ...any
 		code:     code,
 		message:  buildMessage(msg...),
 		metadata: metadata,
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -157,7 +156,7 @@ func NewWithSkipCallerWithCodef(skipCaller int, format, code string, msg ...any)
 		funcName: funcName,
 		code:     code,
 		message:  buildMessageByFormat(format, msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -168,7 +167,7 @@ func NewWithSkipCallerf(skipCaller int, format string, msg ...any) *Err {
 		line:     line,
 		funcName: funcName,
 		message:  buildMessageByFormat(format, msg...),
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 
@@ -181,7 +180,7 @@ func NewWithAllf(skipCaller int, format, code string, metadata map[string]any, m
 		code:     code,
 		message:  buildMessageByFormat(format, msg...),
 		metadata: metadata,
-		stack:    string(debug.Stack()),
+		stack:    buildDebugStack(),
 	}
 }
 

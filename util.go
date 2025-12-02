@@ -9,9 +9,19 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
+
+func escapeSpecialChars(s string) string {
+	replacer := strings.NewReplacer(
+		"\n", "\\n",
+		"\r", "\\r",
+		"\t", "\\t",
+	)
+	return replacer.Replace(s)
+}
 
 func callerInfos(skip int) (fileName string, line string, funcName string) {
 	pc, file, lineNo, ok := runtime.Caller(skip)
@@ -39,7 +49,11 @@ func buildMessage(v ...any) string {
 	if len(message) == 0 {
 		message = "<empty>"
 	}
-	return message
+	return escapeSpecialChars(message)
+}
+
+func buildDebugStack() string {
+	return escapeSpecialChars(string(debug.Stack()))
 }
 
 func buildMessageByFormat(format string, v ...any) string {
@@ -47,6 +61,8 @@ func buildMessageByFormat(format string, v ...any) string {
 }
 
 func cleanMessage(msg string) string {
+	msg = strings.ReplaceAll(msg, "[CODE]", "")
+	msg = strings.ReplaceAll(msg, "[METADATA]", "")
 	msg = strings.ReplaceAll(msg, "[STACK]", "")
 	msg = strings.ReplaceAll(msg, "[CAUSE]", "")
 

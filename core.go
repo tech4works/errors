@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"runtime/debug"
 	"strings"
 )
 
@@ -187,7 +186,7 @@ func Wrap(err error, msg ...any) *Err {
 	}
 
 	e.message = inheritsMessage(e, buildMessage(msg...))
-	e.stack = inheritsStack(e, string(debug.Stack()))
+	e.stack = inheritsStack(e, buildDebugStack())
 
 	return e
 }
@@ -213,7 +212,7 @@ func WrapWithSkipCaller(err error, skip int, msg ...any) *Err {
 		return e
 	}
 
-	e.stack = inheritsStack(e, string(debug.Stack()))
+	e.stack = inheritsStack(e, buildDebugStack())
 
 	return e
 }
@@ -239,7 +238,7 @@ func WrapWithSkipCallerf(err error, skip int, format string, msg ...any) *Err {
 		return e
 	}
 
-	e.stack = inheritsStack(e, string(debug.Stack()))
+	e.stack = inheritsStack(e, buildDebugStack())
 
 	return e
 }
@@ -256,7 +255,7 @@ func Wrapf(err error, format string, msg ...any) *Err {
 		return e
 	}
 
-	e.stack = inheritsStack(e, string(debug.Stack()))
+	e.stack = inheritsStack(e, buildDebugStack())
 
 	return e
 }
@@ -312,7 +311,7 @@ func extract(err error, skip int) (bool, *Err) {
 			line:     line,
 			funcName: funcName,
 			message:  buildMessage(err.Error()),
-			stack:    string(debug.Stack()),
+			stack:    buildDebugStack(),
 		}
 	}
 
@@ -347,13 +346,13 @@ func extract(err error, skip int) (bool, *Err) {
 }
 
 func inheritsMessage(e *Err, msg ...any) string {
-	return fmt.Sprintf("%s | inherited by: %s", buildMessage(msg...), e.Snapshot())
+	return escapeSpecialChars(fmt.Sprintf("%s | inherited by: %s", buildMessage(msg...), e.Snapshot()))
 }
 
 func inheritsStack(e *Err, currentStack string) string {
-	return fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, e.stack)
+	return escapeSpecialChars(fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, e.stack))
 }
 
 func inheritsStackWithError(e *Err, currentStack string) string {
-	return fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, e.Error())
+	return escapeSpecialChars(fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, e.Error()))
 }
