@@ -37,6 +37,21 @@ func IsNot(err, target error) bool {
 	return !Is(err, target)
 }
 
+func ContainsCode(err error, code string) bool {
+	if err == nil || code == "" {
+		return false
+	}
+
+	pattern := fmt.Sprintf(`\[CODE\]:\s*%s(\s|\])`, regexp.QuoteMeta(code))
+	re := regexp.MustCompile(pattern)
+
+	return re.MatchString(err.Error())
+}
+
+func NotContainsCode(err error, code string) bool {
+	return !ContainsCode(err, code)
+}
+
 func Match(err error) bool {
 	regex := regexp.MustCompile(regex)
 	return err != nil && regex.MatchString(err.Error())
