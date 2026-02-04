@@ -52,6 +52,23 @@ func NotContainsCode(err error, code string) bool {
 	return !ContainsCode(err, code)
 }
 
+func Contains(errs []error, target error) bool {
+	if len(errs) == 0 || target == nil {
+		return false
+	}
+
+	for _, err := range errs {
+		if Is(err, target) {
+			return true
+		}
+	}
+	return false
+}
+
+func NotContains(errs []error, target error) bool {
+	return !Contains(errs, target)
+}
+
 func Match(err error) bool {
 	regex := regexp.MustCompile(regex)
 	return err != nil && regex.MatchString(err.Error())
