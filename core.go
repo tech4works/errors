@@ -69,6 +69,23 @@ func NotContains(errs []error, target error) bool {
 	return !Contains(errs, target)
 }
 
+func Only(errs []error, target error) bool {
+	if len(errs) == 0 || target == nil {
+		return false
+	}
+
+	for _, err := range errs {
+		if IsNot(err, target) {
+			return false
+		}
+	}
+	return true
+}
+
+func NotOnly(errs []error, target error) bool {
+	return !Only(errs, target)
+}
+
 func Match(err error) bool {
 	regex := regexp.MustCompile(regex)
 	return err != nil && regex.MatchString(err.Error())
