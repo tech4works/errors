@@ -41,7 +41,7 @@ func callerInfos(skip int) (fileName string, line string, funcName string) {
 }
 
 func buildMessage(v ...any) string {
-	var ss []any
+	ss := filterMsg(v)
 	for _, i := range v {
 		ss = append(ss, toString(i))
 	}
@@ -57,7 +57,7 @@ func buildDebugStack() string {
 }
 
 func buildMessageByFormat(format string, v ...any) string {
-	return cleanMessage(fmt.Sprintf(format, filterMsg(v...)...))
+	return escapeSpecialChars(cleanMessage(fmt.Sprintf(format, filterMsg(v...)...)))
 }
 
 func cleanMessage(msg string) string {
@@ -75,7 +75,9 @@ func filterMsg(v ...any) []any {
 		ivError, ok := iv.(error)
 		if ok {
 			errDetail := Wrap(ivError)
-			v[i] = errDetail.message
+			if errDetail != nil {
+				v[i] = errDetail.message
+			}
 		}
 	}
 	return v

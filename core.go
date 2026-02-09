@@ -96,9 +96,9 @@ func Inherit(err error, msg ...any) *Err {
 		return nil
 	}
 
-	e := NewWithSkipCaller(2, msg...)
+	e := NewWithSkipCaller(3, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, 3)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -118,9 +118,9 @@ func Inheritf(err error, format string, msg ...any) *Err {
 		return nil
 	}
 
-	e := NewWithSkipCallerf(2, format, msg...)
+	e := NewWithSkipCallerf(3, format, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, 3)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -139,9 +139,9 @@ func InheritWithSkipCaller(err error, skipCaller int, msg ...any) *Err {
 		return nil
 	}
 
-	e := NewWithSkipCaller(skipCaller, msg...)
+	e := NewWithSkipCaller(skipCaller+1, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, skipCaller+1)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -162,7 +162,7 @@ func InheritWithCode(err error, code string, msg ...any) *Err {
 
 	e := NewWithCode(code, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, 3)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -182,7 +182,7 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 
 	e := NewWithSkipCallerf(skipCaller, format, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, 3)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -203,7 +203,7 @@ func InheritWithAll(err error, skipCaller int, code string, metadata map[string]
 
 	e := NewWithAll(skipCaller, code, metadata, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, 3)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -227,7 +227,7 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 
 	e := NewWithSkipCallerAndCode(skipCaller, code, msg...)
 
-	extracted, parent := extract(err, 2)
+	extracted, parent := extract(err, 3)
 	if extracted {
 		if e.Message() == "<empty>" {
 			e.message = parent.message
@@ -242,7 +242,7 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 }
 
 func Wrap(err error, msg ...any) *Err {
-	extracted, e := extract(err, 2)
+	extracted, e := extract(err, 3)
 	if e == nil {
 		return nil
 	} else if len(msg) == 0 || !extracted {
@@ -256,7 +256,7 @@ func Wrap(err error, msg ...any) *Err {
 }
 
 func WrapWithSkipCaller(err error, skip int, msg ...any) *Err {
-	extracted, e := extract(err, skip)
+	extracted, e := extract(err, skip+1)
 	if e == nil {
 		return nil
 	}
@@ -282,7 +282,7 @@ func WrapWithSkipCaller(err error, skip int, msg ...any) *Err {
 }
 
 func WrapWithSkipCallerf(err error, skip int, format string, msg ...any) *Err {
-	extracted, e := extract(err, skip)
+	extracted, e := extract(err, skip+1)
 	if e == nil {
 		return nil
 	}
@@ -308,7 +308,7 @@ func WrapWithSkipCallerf(err error, skip int, format string, msg ...any) *Err {
 }
 
 func Wrapf(err error, format string, msg ...any) *Err {
-	extracted, e := extract(err, 2)
+	extracted, e := extract(err, 3)
 	if e == nil {
 		return nil
 	}
