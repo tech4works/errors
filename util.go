@@ -23,8 +23,8 @@ func escapeSpecialChars(s string) string {
 	return replacer.Replace(s)
 }
 
-func callerInfos(skip int) (fileName string, line string, funcName string) {
-	pc, file, lineNo, ok := runtime.Caller(skip)
+func callerInfos(skipCaller int) (fileName string, line string, funcName string) {
+	pc, file, lineNo, ok := runtime.Caller(skipCaller + 1)
 	if !ok {
 		pc, file, lineNo, _ = runtime.Caller(1)
 	}

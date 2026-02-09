@@ -255,13 +255,13 @@ func Wrap(err error, msg ...any) *Err {
 	return e
 }
 
-func WrapWithSkipCaller(err error, skip int, msg ...any) *Err {
-	extracted, e := extract(err, skip+1)
+func WrapWithSkipCaller(err error, skipCaller int, msg ...any) *Err {
+	extracted, e := extract(err, skipCaller+1)
 	if e == nil {
 		return nil
 	}
 
-	file, line, funcName := callerInfos(skip)
+	file, line, funcName := callerInfos(skipCaller)
 	e.file = file
 	e.line = line
 	e.funcName = funcName
@@ -281,13 +281,13 @@ func WrapWithSkipCaller(err error, skip int, msg ...any) *Err {
 	return e
 }
 
-func WrapWithSkipCallerf(err error, skip int, format string, msg ...any) *Err {
-	extracted, e := extract(err, skip+1)
+func WrapWithSkipCallerf(err error, skipCaller int, format string, msg ...any) *Err {
+	extracted, e := extract(err, skipCaller+1)
 	if e == nil {
 		return nil
 	}
 
-	file, line, funcName := callerInfos(skip)
+	file, line, funcName := callerInfos(skipCaller)
 	e.file = file
 	e.line = line
 	e.funcName = funcName
@@ -360,7 +360,7 @@ func contains(err, target error) bool {
 	return err != nil && target != nil && strings.Contains(errString, targetString)
 }
 
-func extract(err error, skip int) (bool, *Err) {
+func extract(err error, skipCaller int) (bool, *Err) {
 	if err == nil {
 		return false, nil
 	}
@@ -369,7 +369,7 @@ func extract(err error, skip int) (bool, *Err) {
 	matches := rg.FindStringSubmatch(err.Error())
 
 	if len(matches) == 0 {
-		file, line, funcName := callerInfos(skip + 1)
+		file, line, funcName := callerInfos(skipCaller + 1)
 		return false, &Err{
 			file:     file,
 			line:     line,
