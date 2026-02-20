@@ -275,6 +275,55 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 	return e
 }
 
+func InheritAsSlice(err error, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{Inherit(err, msg...)}
+}
+
+func InheritAsSlicef(err error, format string, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{Inheritf(err, format, msg...)}
+}
+
+func InheritWithSkipCallerAsSlice(err error, skipCaller int, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{InheritWithSkipCaller(err, skipCaller, msg...)}
+}
+
+func InheritWithCodeAsSlice(err error, code string, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{InheritWithCode(err, code, msg...)}
+}
+
+func InheritWithSkipCallerAsSlicef(err error, skipCaller int, format string, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{InheritWithSkipCallerf(err, skipCaller, format, msg...)}
+}
+
+func InheritWithAllAsSlice(err error, skipCaller int, code string, metadata map[string]any, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{InheritWithAll(err, skipCaller, code, metadata, msg...)}
+}
+
+func InheritWithSkipCallerAndCodeAsSlice(err error, skipCaller int, code string, msg ...any) []error {
+	if err == nil {
+		return nil
+	}
+	return []error{InheritWithSkipCallerAndCode(err, skipCaller, code, msg...)}
+}
+
 func Join(errs []error, sep string) error {
 	return errors.New(JoinToString(errs, sep))
 }
