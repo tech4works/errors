@@ -116,6 +116,11 @@ func As(err error, target any) bool {
 	return false
 }
 
+func Wrap(err error) *Err {
+	_, extract := extract(err, 3)
+	return extract
+}
+
 func Inherit(err error, msg ...any) *Err {
 	if err == nil {
 		return nil
@@ -270,13 +275,64 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 	return e
 }
 
-func Wrap(err error) *Err {
-	_, extract := extract(err, 3)
-	return extract
-}
-
 func Join(errs []error, sep string) error {
 	return errors.New(JoinToString(errs, sep))
+}
+
+func JoinInherit(errs []error, sep string, msg ...any) error {
+	if errs == nil {
+		return nil
+	}
+
+	return Inherit(Join(errs, sep), msg...)
+}
+
+func JoinInheritf(errs []error, sep, format string, msg ...any) *Err {
+	if errs == nil {
+		return nil
+	}
+
+	return Inheritf(Join(errs, sep), format, msg...)
+}
+
+func JoinInheritWithSkipCaller(errs []error, sep string, skipCaller int, msg ...any) *Err {
+	if errs == nil {
+		return nil
+	}
+
+	return InheritWithSkipCaller(Join(errs, sep), skipCaller, msg...)
+}
+
+func JoinInheritWithCode(errs []error, sep, code string, msg ...any) *Err {
+	if errs == nil {
+		return nil
+	}
+
+	return InheritWithCode(Join(errs, sep), code, msg...)
+}
+
+func JoinInheritWithSkipCallerf(errs []error, sep string, skipCaller int, format string, msg ...any) *Err {
+	if errs == nil {
+		return nil
+	}
+
+	return InheritWithSkipCallerf(Join(errs, sep), skipCaller, format, msg...)
+}
+
+func JoinInheritWithAll(errs []error, sep string, skipCaller int, code string, metadata map[string]any, msg ...any) *Err {
+	if errs == nil {
+		return nil
+	}
+
+	return InheritWithAll(Join(errs, sep), skipCaller, code, metadata, msg...)
+}
+
+func JoinInheritWithSkipCallerAndCode(errs []error, sep string, skipCaller int, code string, msg ...any) *Err {
+	if errs == nil {
+		return nil
+	}
+
+	return InheritWithSkipCallerAndCode(Join(errs, sep), skipCaller, code, msg...)
 }
 
 func JoinToString(errs []error, sep string) (result string) {
