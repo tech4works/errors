@@ -13,24 +13,35 @@ const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 	`(?: \[METADATA]: (.+?))?` + // 6: metadata (optional)
 	` \[STACK]:\s*([\s\S]+)$` // 7: stack
 
+const inheritSep = "----------------\n\t\t|\tinherited by: "
+
 func Is(err, target error) bool {
 	if err == nil || target == nil {
 		return false
 	}
 
+	var mErr, mTarget Err
+
 	errString := err.Error()
-	if Match(err) {
-		wrapped := Wrap(err)
-		errString = wrapped.Snapshot()
+	if As(err, &mErr) {
+		if mErr.IsTarget() {
+			return false
+		}
+		errString = mErr.Snapshot()
 	}
 
 	targetString := target.Error()
-	if Match(target) {
-		wrapped := Wrap(target)
-		targetString = wrapped.Snapshot()
+	targetContains := targetString
+	if As(err, &mTarget) {
+		targetString = mTarget.Snapshot()
+		if mTarget.HasCode() {
+			targetContains = mTarget.Code()
+		} else {
+			targetContains = mTarget.Snapshot()
+		}
 	}
 
-	return errString == targetString || contains(err, target)
+	return errString == targetString || strings.Contains(errString, targetContains)
 }
 
 func IsNot(err, target error) bool {
@@ -86,9 +97,23 @@ func NotOnly(errs []error, target error) bool {
 	return !Only(errs, target)
 }
 
-func Match(err error) bool {
-	regex := regexp.MustCompile(regex)
-	return err != nil && regex.MatchString(err.Error())
+func As(err error, target any) bool {
+	if err == nil || target == nil {
+		return false
+	} else if errors.As(err, target) {
+		return true
+	} else if t, ok := target.(**Err); ok {
+		if !regexp.MustCompile(regex).MatchString(err.Error()) {
+			return false
+		}
+
+		extracted, parsed := extract(err, 3)
+
+		*t = parsed
+		return extracted
+	}
+
+	return false
 }
 
 func Inherit(err error, msg ...any) *Err {
@@ -99,15 +124,14 @@ func Inherit(err error, msg ...any) *Err {
 	e := NewWithSkipCaller(3, msg...)
 
 	extracted, parent := extract(err, 3)
+
+	e.parent = parent
+	if e.Message() == "<empty>" {
+		e.message = parent.message
+	}
 	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
 		e.code = parent.code
 		e.metadata = parent.metadata
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
 	}
 
 	return e
@@ -121,16 +145,16 @@ func Inheritf(err error, format string, msg ...any) *Err {
 	e := NewWithSkipCallerf(3, format, msg...)
 
 	extracted, parent := extract(err, 3)
+
+	e.parent = parent
+	if e.Message() == "<empty>" {
+		e.message = parent.message
+	}
 	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
 		e.code = parent.code
 		e.metadata = parent.metadata
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
 	}
+
 	return e
 }
 
@@ -142,16 +166,16 @@ func InheritWithSkipCaller(err error, skipCaller int, msg ...any) *Err {
 	e := NewWithSkipCaller(skipCaller+1, msg...)
 
 	extracted, parent := extract(err, skipCaller+1)
+
+	e.parent = parent
+	if e.Message() == "<empty>" {
+		e.message = parent.message
+	}
 	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
 		e.code = parent.code
 		e.metadata = parent.metadata
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
 	}
+
 	return e
 }
 
@@ -163,15 +187,17 @@ func InheritWithCode(err error, code string, msg ...any) *Err {
 	e := NewWithCode(code, msg...)
 
 	extracted, parent := extract(err, 3)
-	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
-		e.metadata = parent.metadata
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
+
+	e.parent = parent
+
+	if e.Message() == "<empty>" {
+		e.message = parent.message
 	}
+
+	if extracted {
+		e.metadata = parent.metadata
+	}
+
 	return e
 }
 
@@ -183,16 +209,17 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 	e := NewWithSkipCallerf(skipCaller, format, msg...)
 
 	extracted, parent := extract(err, 3)
+
+	e.parent = parent
+	if e.Message() == "<empty>" {
+		e.message = parent.message
+	}
+
 	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
 		e.code = parent.code
 		e.metadata = parent.metadata
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
 	}
+
 	return e
 }
 
@@ -204,19 +231,20 @@ func InheritWithAll(err error, skipCaller int, code string, metadata map[string]
 	e := NewWithAll(skipCaller, code, metadata, msg...)
 
 	extracted, parent := extract(err, 3)
+
+	e.parent = parent
+	if e.Message() == "<empty>" {
+		e.message = parent.message
+	}
+
 	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
 		for k, v := range parent.metadata {
 			if _, exists := e.metadata[k]; !exists {
 				e.metadata[k] = v
 			}
 		}
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
 	}
+
 	return e
 }
 
@@ -228,100 +256,23 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 	e := NewWithSkipCallerAndCode(skipCaller, code, msg...)
 
 	extracted, parent := extract(err, 3)
+
+	e.parent = parent
+	if e.Message() == "<empty>" {
+		e.message = parent.message
+	}
+
 	if extracted {
-		if e.Message() == "<empty>" {
-			e.message = parent.message
-		}
 		e.code = parent.code
 		e.metadata = parent.metadata
-		e.stack = inheritsStackWithError(parent, e.stack)
-	} else {
-		e.message = inheritsSimpleMessageByErrs(parent, e)
 	}
-	return e
-}
-
-func Wrap(err error, msg ...any) *Err {
-	extracted, e := extract(err, 3)
-	if e == nil {
-		return nil
-	} else if len(msg) == 0 || !extracted {
-		return e
-	}
-
-	e.message = inheritsMessage(e, buildMessage(msg...))
-	e.stack = inheritsStack(e, buildDebugStack())
 
 	return e
 }
 
-func WrapWithSkipCaller(err error, skipCaller int, msg ...any) *Err {
-	extracted, e := extract(err, skipCaller+1)
-	if e == nil {
-		return nil
-	}
-
-	file, line, funcName := callerInfos(skipCaller)
-	e.file = file
-	e.line = line
-	e.funcName = funcName
-
-	if len(msg) == 0 {
-		return e
-	}
-
-	e.message = inheritsMessage(e, msg...)
-
-	if !extracted {
-		return e
-	}
-
-	e.stack = inheritsStack(e, buildDebugStack())
-
-	return e
-}
-
-func WrapWithSkipCallerf(err error, skipCaller int, format string, msg ...any) *Err {
-	extracted, e := extract(err, skipCaller+1)
-	if e == nil {
-		return nil
-	}
-
-	file, line, funcName := callerInfos(skipCaller)
-	e.file = file
-	e.line = line
-	e.funcName = funcName
-
-	if len(msg) == 0 {
-		return e
-	}
-
-	e.message = inheritsMessage(e, buildMessageByFormat(format, msg...))
-
-	if !extracted {
-		return e
-	}
-
-	e.stack = inheritsStack(e, buildDebugStack())
-
-	return e
-}
-
-func Wrapf(err error, format string, msg ...any) *Err {
-	extracted, e := extract(err, 3)
-	if e == nil {
-		return nil
-	}
-
-	e.message = inheritsMessage(e, buildMessageByFormat(format, msg...))
-
-	if !extracted {
-		return e
-	}
-
-	e.stack = inheritsStack(e, buildDebugStack())
-
-	return e
+func Wrap(err error) *Err {
+	_, extract := extract(err, 3)
+	return extract
 }
 
 func Join(errs []error, sep string) error {
@@ -340,29 +291,14 @@ func JoinToString(errs []error, sep string) (result string) {
 
 }
 
-func contains(err, target error) bool {
-	errString := err.Error()
-	if Match(err) {
-		errDetails := Wrap(err)
-		errString = errDetails.Snapshot()
-	}
-
-	targetString := target.Error()
-	if Match(target) {
-		errDetails := Wrap(target)
-		if len(errDetails.Code()) > 0 {
-			targetString = errDetails.Code()
-		} else {
-			targetString = errDetails.Message()
-		}
-	}
-
-	return err != nil && target != nil && strings.Contains(errString, targetString)
-}
-
 func extract(err error, skipCaller int) (bool, *Err) {
 	if err == nil {
 		return false, nil
+	}
+
+	var e *Err
+	if errors.As(err, &e) {
+		return true, e
 	}
 
 	rg := regexp.MustCompile(regex)
@@ -379,25 +315,23 @@ func extract(err error, skipCaller int) (bool, *Err) {
 		}
 	}
 
-	e := &Err{
+	e = &Err{
 		file:     matches[2],
 		line:     matches[3],
 		funcName: matches[4],
 		message:  matches[5],
-		stack:    matches[7],
+		stack:    []byte(matches[7]),
 	}
 
-	// code opcional
 	if matches[1] != "" {
 		e.code = matches[1]
 	}
 
-	// metadata opcional
 	if matches[6] != "" {
 		metaStr := matches[6]
 
 		var meta map[string]any
-		if err := json.Unmarshal([]byte(metaStr), &meta); err == nil {
+		if err = json.Unmarshal([]byte(metaStr), &meta); err == nil {
 			e.metadata = meta
 		} else {
 			e.metadata = map[string]any{
@@ -407,20 +341,4 @@ func extract(err error, skipCaller int) (bool, *Err) {
 	}
 
 	return true, e
-}
-
-func inheritsSimpleMessageByErrs(parent, e *Err) string {
-	return escapeSpecialChars(fmt.Sprintf("%s | inherited by: %s", e.Message(), parent.Message()))
-}
-
-func inheritsMessage(parent *Err, msg ...any) string {
-	return escapeSpecialChars(fmt.Sprintf("%s | inherited by: %s", buildMessage(msg...), parent.Snapshot()))
-}
-
-func inheritsStack(parent *Err, currentStack string) string {
-	return escapeSpecialChars(fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, parent.stack))
-}
-
-func inheritsStackWithError(parent *Err, currentStack string) string {
-	return escapeSpecialChars(fmt.Sprintf("%s----------------\n\t\t|\tinherited by: %s", currentStack, parent.Error()))
 }

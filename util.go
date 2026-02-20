@@ -14,6 +14,115 @@ import (
 	"strings"
 )
 
+func renderStackByPolicy(raw []byte) string {
+	switch getPolicy() {
+	case PolicyDetailed:
+		return normalizeStack(raw)
+	case PolicyNormal:
+		return normalizeStack(filterBoilerplateFrames(raw, 0))
+	case PolicyNative:
+		return normalizeStack(filterBoilerplateFrames(raw, 5))
+	default:
+		return normalizeStack(raw)
+	}
+}
+
+func normalizeStack(raw []byte) string {
+	s := string(raw)
+
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "<empty>"
+	}
+
+	return s
+}
+
+func filterBoilerplateFrames(raw []byte, keepLast int) []byte {
+	lines := strings.Split(string(raw), "\n")
+
+	type frame struct {
+		fn   string
+		file string
+	}
+
+	frames := make([]frame, 0, len(lines)/2)
+
+	// debug.Stack geralmente vem assim:
+	// goroutine X [running]:
+	// runtime/debug.Stack(...)
+	// ...
+	// \t/path/file.go:line +0x...
+	//
+	// Vamos ignorar o header e tentar agrupar por pares (fn line + file line)
+	for i := 0; i < len(lines)-1; i++ {
+		fnLine := lines[i]
+		fileLine := lines[i+1]
+
+		// heurística: fileLine costuma começar com tab e conter ".go:"
+		if !looksLikeFileLine(fileLine) {
+			continue
+		}
+
+		if isBoilerplate(fnLine, fileLine) {
+			i++ // consumiu o par
+			continue
+		}
+
+		frames = append(frames, frame{
+			fn:   strings.TrimRight(fnLine, "\r"),
+			file: strings.TrimRight(fileLine, "\r"),
+		})
+
+		i++ // consumiu o par
+	}
+
+	// Se não conseguimos parsear frames, fallback: devolve raw
+	if len(frames) == 0 {
+		return raw
+	}
+
+	// keepLast
+	if keepLast > 0 && len(frames) > keepLast {
+		frames = frames[len(frames)-keepLast:]
+	}
+
+	// Remonta mantendo pares
+	var out []string
+	for _, fr := range frames {
+		out = append(out, fr.fn, fr.file)
+	}
+	return []byte(strings.Join(out, "\n"))
+}
+
+func looksLikeFileLine(s string) bool {
+	// debug.Stack usa "\t/path/file.go:123 +0x..."
+	return strings.Contains(s, ".go:") && strings.HasPrefix(s, "\t")
+}
+
+func isBoilerplate(fnLine, fileLine string) bool {
+	fn := strings.TrimSpace(fnLine)
+	file := strings.TrimSpace(fileLine)
+
+	// Ajuste livre: esses são defaults “bons” pra microserviço/gateway
+	dropContains := []string{
+		"/runtime/", "runtime.",
+		"/testing/", "testing.",
+		"/reflect/", "reflect.",
+		"/net/http/", "net/http.",
+		"/runtime/debug", "runtime/debug.",
+		"/pkg/mod/",
+	}
+
+	for _, d := range dropContains {
+		if strings.Contains(fn, d) || strings.Contains(file, d) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func escapeSpecialChars(s string) string {
 	replacer := strings.NewReplacer(
 		"\n", "\\n",
@@ -52,8 +161,8 @@ func buildMessage(v ...any) string {
 	return escapeSpecialChars(message)
 }
 
-func buildDebugStack() string {
-	return escapeSpecialChars(string(debug.Stack()))
+func buildDebugStack() []byte {
+	return debug.Stack()
 }
 
 func buildMessageByFormat(format string, v ...any) string {

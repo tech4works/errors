@@ -4,16 +4,50 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 )
 
+type Policy uint32
+
+const (
+	PolicyDetailed Policy = iota
+	PolicyNormal
+	PolicyNative
+)
+
+var policy atomic.Uint32
+
+func init() {
+	policy.Store(uint32(PolicyNormal))
+}
+
+func SetPolicy(m Policy) {
+	policy.Store(uint32(m))
+}
+
+func getPolicy() Policy {
+	return Policy(policy.Load())
+}
+
 type Err struct {
+	parent *Err
+
+	target   bool
 	file     string
 	line     string
 	funcName string
 	code     string
 	message  string
 	metadata map[string]any
-	stack    string
+	stack    []byte
+}
+
+func TargetWithCode(code string) *Err {
+	return &Err{target: true, code: code}
+}
+
+func TargetWithMessage(msg ...any) *Err {
+	return &Err{target: true, message: buildMessage(msg...)}
 }
 
 func New(msg ...any) *Err {
@@ -184,7 +218,7 @@ func NewWithAllf(skipCaller int, format, code string, metadata map[string]any, m
 	}
 }
 
-func NewWithRawData(file, line, funcName, code, message string, metadata map[string]any, stack string) *Err {
+func NewWithRawData(file, line, funcName, code, message string, metadata map[string]any, stack []byte) *Err {
 	return &Err{
 		file:     file,
 		line:     line,
@@ -198,13 +232,20 @@ func NewWithRawData(file, line, funcName, code, message string, metadata map[str
 
 func (e *Err) Error() string {
 	var code string
-	if len(e.Code()) > 0 {
+	if e.HasCode() {
 		code = fmt.Sprintf("[CODE]: %s ", e.Code())
 	}
 	var metadata string
-	if len(e.Metadata()) > 0 {
+	if e.HasMetadata() {
 		metadata = fmt.Sprintf(" [METADATA]: %s", toString(e.Metadata()))
 	}
+
+	stackView := renderStackByPolicy(e.stack)
+
+	if e.parent != nil {
+		stackView = stackView + "\n" + inheritSep + e.parent.Error()
+	}
+
 	return fmt.Sprint(code, "[CAUSE]: ", e.Cause().Error(), metadata, " [STACK]: ", e.Stack())
 }
 
@@ -217,7 +258,15 @@ func (e *Err) PrintCause() {
 }
 
 func (e *Err) Cause() error {
-	return errors.New(fmt.Sprint("(", e.file, ":", e.line, ")", " ", e.funcName, ": ", e.message))
+	return errors.New(fmt.Sprint("(", e.file, ":", e.line, ")", " ", e.funcName, ": ", e.Snapshot()))
+}
+
+func (e *Err) IsTarget() bool {
+	return e.target
+}
+
+func (e *Err) HasCode() bool {
+	return len(e.Code()) > 0
 }
 
 func (e *Err) Code() string {
@@ -241,17 +290,21 @@ func (e *Err) Func() string {
 	return e.funcName
 }
 
+func (e *Err) HasMetadata() bool {
+	return e.metadata != nil && len(e.metadata) > 0
+}
+
 func (e *Err) Metadata() map[string]any {
 	return e.metadata
 }
 
 func (e *Err) Stack() string {
-	return e.stack
+	return renderStackByPolicy(e.stack)
 }
 
 func (e *Err) Snapshot() string {
 	s := e.Message()
-	if len(e.Code()) > 0 {
+	if e.HasCode() {
 		s = fmt.Sprintf("[CODE]: %s [MESSAGE]: %s", e.Code(), s)
 	}
 	return s
@@ -259,4 +312,17 @@ func (e *Err) Snapshot() string {
 
 func (e *Err) String() string {
 	return e.Error()
+}
+
+func (e *Err) Raw() string {
+	var code string
+	if e.HasCode() {
+		code = fmt.Sprintf("[CODE]: %s ", e.Code())
+	}
+	var metadata string
+	if e.HasMetadata() {
+		metadata = fmt.Sprintf(" [METADATA]: %s", toString(e.Metadata()))
+	}
+
+	return fmt.Sprint(code, "[CAUSE]: ", e.Cause().Error(), metadata, " [STACK]: ", normalizeStack(e.stack))
 }
