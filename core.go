@@ -332,7 +332,6 @@ func JoinInherit(errs []error, sep string, msg ...any) error {
 	if errs == nil {
 		return nil
 	}
-
 	return Inherit(Join(errs, sep), msg...)
 }
 
@@ -340,8 +339,21 @@ func JoinInheritf(errs []error, sep, format string, msg ...any) *Err {
 	if errs == nil {
 		return nil
 	}
-
 	return Inheritf(Join(errs, sep), format, msg...)
+}
+
+func JoinInheritAsSlice(errs []error, sep string, msg ...any) []error {
+	if errs == nil {
+		return nil
+	}
+	return InheritAsSlice(Join(errs, sep), msg...)
+}
+
+func JoinInheritAsSlicef(errs []error, sep, format string, msg ...any) []error {
+	if errs == nil {
+		return nil
+	}
+	return InheritAsSlicef(Join(errs, sep), format, msg...)
 }
 
 func JoinInheritWithSkipCaller(errs []error, sep string, skipCaller int, msg ...any) *Err {
