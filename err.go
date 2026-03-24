@@ -351,7 +351,7 @@ func (e *Err) Func() string {
 }
 
 func (e *Err) HasMetadata() bool {
-	return e.metadata != nil && len(e.metadata) > 0
+	return len(e.metadata) > 0
 }
 
 func (e *Err) Metadata() map[string]any {
