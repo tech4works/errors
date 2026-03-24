@@ -23,7 +23,7 @@ func Is(err, target error) bool {
 		return false
 	}
 
-	var mErr, mTarget Err
+	var mErr, mTarget *Err
 
 	errString := err.Error()
 	if As(err, &mErr) {
