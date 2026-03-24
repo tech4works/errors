@@ -319,14 +319,7 @@ func (e *Err) Error() string {
 
 func (e *Err) Raw() string {
 	if e.target {
-		s := "[TARGET]: true"
-		if e.HasCode() {
-			s += " [CODE]: " + e.code
-		}
-		if len(e.message) > 0 {
-			s += " [MESSAGE]: " + e.message
-		}
-		return s
+		return e.Error()
 	}
 
 	code := ""
