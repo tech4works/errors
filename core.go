@@ -40,7 +40,7 @@ func Is(err, target error) bool {
 		if mTarget.HasCode() {
 			targetContains = mTarget.Code()
 		} else {
-			targetContains = mTarget.Snapshot()
+			targetContains = mTarget.Message()
 		}
 	}
 
