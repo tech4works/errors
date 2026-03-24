@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 )
@@ -14,6 +15,8 @@ const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 	` \[STACK]:\s*([\s\S]+)$` // 7: stack
 
 const inheritSep = "----------------\n\t\t|\tinherited by: "
+
+var compiledRegex = regexp.MustCompile(regex)
 
 func Is(err, target error) bool {
 	if err == nil || target == nil {
@@ -32,7 +35,7 @@ func Is(err, target error) bool {
 
 	targetString := target.Error()
 	targetContains := targetString
-	if As(err, &mTarget) {
+	if As(target, &mTarget) {
 		targetString = mTarget.Snapshot()
 		if mTarget.HasCode() {
 			targetContains = mTarget.Code()
@@ -100,25 +103,40 @@ func NotOnly(errs []error, target error) bool {
 func As(err error, target any) bool {
 	if err == nil || target == nil {
 		return false
-	} else if errors.As(err, target) {
-		return true
-	} else if t, ok := target.(**Err); ok {
-		if !regexp.MustCompile(regex).MatchString(err.Error()) {
+	}
+
+	if t, ok := target.(**Err); ok {
+		extracted, parsed := extract(err, 3)
+		if parsed == nil {
 			return false
 		}
-
-		extracted, parsed := extract(err, 3)
-
-		*t = parsed
+		if extracted {
+			*t = parsed
+		}
 		return extracted
+	}
+
+	if t, ok := target.(*Err); ok {
+		extracted, parsed := extract(err, 3)
+		if extracted && parsed != nil {
+			*t = *parsed
+		}
+		return extracted
+	}
+
+	if isValidAsTarget(target) {
+		return errors.As(err, target)
 	}
 
 	return false
 }
 
 func Wrap(err error) *Err {
-	_, extract := extract(err, 3)
-	return extract
+	if err == nil {
+		return nil
+	}
+	_, e := extract(err, 3)
+	return e
 }
 
 func Inherit(err error, msg ...any) *Err {
@@ -211,7 +229,7 @@ func InheritWithSkipCallerf(err error, skipCaller int, format string, msg ...any
 		return nil
 	}
 
-	e := NewWithSkipCallerf(skipCaller, format, msg...)
+	e := NewWithSkipCallerf(skipCaller+1, format, msg...)
 
 	extracted, parent := extract(err, 3)
 
@@ -397,15 +415,19 @@ func JoinInheritWithSkipCallerAndCode(errs []error, sep string, skipCaller int, 
 }
 
 func JoinToString(errs []error, sep string) (result string) {
+	if len(errs) == 0 {
+		return ""
+	}
 	for i, err := range errs {
 		dt := Wrap(err)
-		result += dt.message
+		if dt != nil {
+			result += dt.message
+		}
 		if i < len(errs)-1 {
 			result += sep
 		}
 	}
 	return result
-
 }
 
 func extract(err error, skipCaller int) (bool, *Err) {
@@ -418,7 +440,7 @@ func extract(err error, skipCaller int) (bool, *Err) {
 		return true, e
 	}
 
-	rg := regexp.MustCompile(regex)
+	rg := compiledRegex
 	matches := rg.FindStringSubmatch(err.Error())
 
 	if len(matches) == 0 {
@@ -458,4 +480,14 @@ func extract(err error, skipCaller int) (bool, *Err) {
 	}
 
 	return true, e
+}
+
+func isValidAsTarget(target any) bool {
+	rv := reflect.ValueOf(target)
+	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return false
+	}
+	elem := rv.Type().Elem()
+	errorType := reflect.TypeOf((*error)(nil)).Elem()
+	return elem.Implements(errorType) || elem.Kind() == reflect.Interface
 }
