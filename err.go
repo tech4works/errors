@@ -291,6 +291,18 @@ func NewWithRawDataAsSlice(file, line, funcName, code, message string, metadata 
 }
 
 func (e *Err) Error() string {
+	if e.target {
+		var code string
+		if e.HasCode() {
+			code = fmt.Sprintf(" [CODE]: %s", e.Code())
+		}
+		var message string
+		if len(e.message) > 0 {
+			message = fmt.Sprintf(" [MESSAGE]: %s", e.message)
+		}
+		return fmt.Sprint("[TARGET]: true", code, message)
+	}
+
 	var code string
 	if e.HasCode() {
 		code = fmt.Sprintf("[CODE]: %s ", e.Code())
@@ -318,6 +330,9 @@ func (e *Err) PrintCause() {
 }
 
 func (e *Err) Cause() error {
+	if e.IsTarget() {
+		return errors.New(e.Snapshot())
+	}
 	return errors.New(fmt.Sprint("(", e.file, ":", e.line, ")", " ", e.funcName, ": ", e.Snapshot()))
 }
 
@@ -331,6 +346,10 @@ func (e *Err) HasCode() bool {
 
 func (e *Err) Code() string {
 	return e.code
+}
+
+func (e *Err) HasMessage() bool {
+	return len(e.Message()) > 0
 }
 
 func (e *Err) Message() string {

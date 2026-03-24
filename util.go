@@ -280,3 +280,10 @@ func implementsError(reflectType reflect.Type) bool {
 	}
 	return reflectType.Implements(reflect.TypeOf((*error)(nil)).Elem())
 }
+
+func optionalField(label, value string) string {
+	if len(value) == 0 {
+		return ""
+	}
+	return label + value
+}
