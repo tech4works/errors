@@ -292,33 +292,52 @@ func NewWithRawDataAsSlice(file, line, funcName, code, message string, metadata 
 
 func (e *Err) Error() string {
 	if e.target {
-		var code string
+		s := "[TARGET]: true"
 		if e.HasCode() {
-			code = fmt.Sprintf(" [CODE]: %s", e.Code())
+			s += " [CODE]: " + e.code
 		}
-		var message string
 		if len(e.message) > 0 {
-			message = fmt.Sprintf(" [MESSAGE]: %s", e.message)
+			s += " [MESSAGE]: " + e.message
 		}
-		return fmt.Sprint("[TARGET]: true", code, message)
+		return s
 	}
 
-	var code string
+	code := ""
 	if e.HasCode() {
-		code = fmt.Sprintf("[CODE]: %s ", e.Code())
+		code = "[CODE]: " + e.code + " "
 	}
-	var metadata string
+	metadata := ""
 	if e.HasMetadata() {
-		metadata = fmt.Sprintf(" [METADATA]: %s", toString(e.Metadata()))
+		metadata = " [METADATA]: " + toString(e.Metadata())
 	}
-
-	stackView := renderStackByPolicy(e.stack)
-
+	stack := e.Stack()
 	if e.parent != nil {
-		stackView = stackView + "\n" + inheritSep + e.parent.Error()
+		stack += "\n" + inheritSep + e.parent.Error()
+	}
+	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + stack
+}
+
+func (e *Err) Raw() string {
+	if e.target {
+		s := "[TARGET]: true"
+		if e.HasCode() {
+			s += " [CODE]: " + e.code
+		}
+		if len(e.message) > 0 {
+			s += " [MESSAGE]: " + e.message
+		}
+		return s
 	}
 
-	return fmt.Sprint(code, "[CAUSE]: ", e.Cause().Error(), metadata, " [STACK]: ", e.Stack())
+	code := ""
+	if e.HasCode() {
+		code = "[CODE]: " + e.code + " "
+	}
+	metadata := ""
+	if e.HasMetadata() {
+		metadata = " [METADATA]: " + toString(e.Metadata())
+	}
+	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + normalizeStack(e.stack)
 }
 
 func (e *Err) PrintStackTrace() {
@@ -330,7 +349,7 @@ func (e *Err) PrintCause() {
 }
 
 func (e *Err) Cause() error {
-	if e.IsTarget() {
+	if e.target {
 		return errors.New(e.Snapshot())
 	}
 	return errors.New(fmt.Sprint("(", e.file, ":", e.line, ")", " ", e.funcName, ": ", e.Snapshot()))
@@ -341,7 +360,7 @@ func (e *Err) IsTarget() bool {
 }
 
 func (e *Err) HasCode() bool {
-	return len(e.Code()) > 0
+	return len(e.code) > 0
 }
 
 func (e *Err) Code() string {
@@ -349,7 +368,7 @@ func (e *Err) Code() string {
 }
 
 func (e *Err) HasMessage() bool {
-	return len(e.Message()) > 0
+	return len(e.message) > 0
 }
 
 func (e *Err) Message() string {
@@ -382,26 +401,13 @@ func (e *Err) Stack() string {
 }
 
 func (e *Err) Snapshot() string {
-	s := e.Message()
+	s := e.message
 	if e.HasCode() {
-		s = fmt.Sprintf("[CODE]: %s [MESSAGE]: %s", e.Code(), s)
+		s = "[CODE]: " + e.code + " [MESSAGE]: " + s
 	}
 	return s
 }
 
 func (e *Err) String() string {
 	return e.Error()
-}
-
-func (e *Err) Raw() string {
-	var code string
-	if e.HasCode() {
-		code = fmt.Sprintf("[CODE]: %s ", e.Code())
-	}
-	var metadata string
-	if e.HasMetadata() {
-		metadata = fmt.Sprintf(" [METADATA]: %s", toString(e.Metadata()))
-	}
-
-	return fmt.Sprint(code, "[CAUSE]: ", e.Cause().Error(), metadata, " [STACK]: ", normalizeStack(e.stack))
 }
