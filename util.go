@@ -150,10 +150,7 @@ func callerInfos(skipCaller int) (fileName string, line string, funcName string)
 }
 
 func buildMessage(v ...any) string {
-	ss := filterMsg(v)
-	for _, i := range v {
-		ss = append(ss, toString(i))
-	}
+	ss := filterMsg(v...)
 	message := cleanMessage(strings.TrimRight(fmt.Sprintln(ss...), "\n"))
 	if len(message) == 0 {
 		message = "<empty>"
@@ -180,16 +177,18 @@ func cleanMessage(msg string) string {
 }
 
 func filterMsg(v ...any) []any {
+	result := make([]any, len(v))
 	for i, iv := range v {
-		ivError, ok := iv.(error)
-		if ok {
+		if ivError, ok := iv.(error); ok {
 			errDetail := Wrap(ivError)
 			if errDetail != nil {
-				v[i] = errDetail.message
+				result[i] = errDetail.message
+				continue
 			}
 		}
+		result[i] = toString(iv)
 	}
-	return v
+	return result
 }
 
 func formatFuncName(name string) string {
