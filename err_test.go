@@ -67,7 +67,7 @@ func TestNewWithCodeAndMetadata(t *testing.T) {
 }
 
 func TestNewWithCodef(t *testing.T) {
-	err := NewWithCodef("value is %s", "ERR", "bad")
+	err := NewWithCodef("ERR", "value is %s", "bad")
 	if err.Code() != "ERR" {
 		t.Errorf("expected code 'ERR', got '%s'", err.Code())
 	}
@@ -78,7 +78,7 @@ func TestNewWithCodef(t *testing.T) {
 
 func TestNewWithMetadataf(t *testing.T) {
 	meta := map[string]any{"k": "v"}
-	err := NewWithMetadataf("msg %s", meta, "here")
+	err := NewWithMetadataf(meta, "msg %s", "here")
 	if err.Message() != "msg here" {
 		t.Errorf("expected 'msg here', got '%s'", err.Message())
 	}
@@ -86,7 +86,7 @@ func TestNewWithMetadataf(t *testing.T) {
 
 func TestNewWithCodeAndMetadataf(t *testing.T) {
 	meta := map[string]any{"k": "v"}
-	err := NewWithCodeAndMetadataf("msg %s", "C1", meta, "x")
+	err := NewWithCodeAndMetadataf("C1", meta, "msg %s", "x")
 	if err.Code() != "C1" {
 		t.Errorf("expected code 'C1', got '%s'", err.Code())
 	}
@@ -118,7 +118,7 @@ func TestNewWithAll(t *testing.T) {
 }
 
 func TestNewWithSkipCallerAndCodef(t *testing.T) {
-	err := NewWithSkipCallerAndCodef(1, "fmt %s", "FMT01", "val")
+	err := NewWithSkipCallerAndCodef(1, "FMT01", "fmt %s", "val")
 	if err.Code() != "FMT01" {
 		t.Errorf("expected 'FMT01', got '%s'", err.Code())
 	}
@@ -136,7 +136,7 @@ func TestNewWithSkipCallerf(t *testing.T) {
 
 func TestNewWithAllf(t *testing.T) {
 	meta := map[string]any{"z": "w"}
-	err := NewWithAllf(1, "msg %s", "ALLF", meta, "x")
+	err := NewWithAllf(1, "ALLF", meta, "msg %s", "x")
 	if err.Code() != "ALLF" {
 		t.Errorf("expected 'ALLF', got '%s'", err.Code())
 	}
@@ -197,21 +197,21 @@ func TestNewWithCodeAndMetadataAsSlice(t *testing.T) {
 }
 
 func TestNewWithCodeAsSlicef(t *testing.T) {
-	errs := NewWithCodeAsSlicef("msg %s", "C1", "x")
+	errs := NewWithCodeAsSlicef("C1", "msg %s", "x")
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}
 }
 
 func TestNewWithMetadataAsSlicef(t *testing.T) {
-	errs := NewWithMetadataAsSlicef("msg %s", map[string]any{"k": "v"}, "x")
+	errs := NewWithMetadataAsSlicef(map[string]any{"k": "v"}, "msg %s", "x")
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}
 }
 
 func TestNewWithCodeAndMetadataAsSlicef(t *testing.T) {
-	errs := NewWithCodeAndMetadataAsSlicef("msg %s", "C1", map[string]any{"k": "v"}, "x")
+	errs := NewWithCodeAndMetadataAsSlicef("C1", map[string]any{"k": "v"}, "msg %s", "x")
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}
@@ -239,7 +239,7 @@ func TestNewWithAllAsSlice(t *testing.T) {
 }
 
 func TestNewWithSkipCallerAndCodeAsSlicef(t *testing.T) {
-	errs := NewWithSkipCallerAndCodeAsSlicef(1, "msg %s", "C1", "x")
+	errs := NewWithSkipCallerAndCodeAsSlicef(1, "C1", "msg %s", "x")
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}
@@ -253,7 +253,7 @@ func TestNewWithSkipCallerAsSlicef(t *testing.T) {
 }
 
 func TestNewWithAllAsSlicef(t *testing.T) {
-	errs := NewWithAllAsSlicef(1, "msg %s", "C1", map[string]any{"k": "v"}, "x")
+	errs := NewWithAllAsSlicef(1, "C1", map[string]any{"k": "v"}, "msg %s", "x")
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}

@@ -109,7 +109,7 @@ func Newf(format string, msg ...any) *Err {
 	}
 }
 
-func NewWithCodef(format, code string, msg ...any) *Err {
+func NewWithCodef(code, format string, msg ...any) *Err {
 	file, line, funcName := callerInfos(2)
 	return &Err{
 		file:     file,
@@ -121,7 +121,7 @@ func NewWithCodef(format, code string, msg ...any) *Err {
 	}
 }
 
-func NewWithMetadataf(format string, metadata map[string]any, msg ...any) *Err {
+func NewWithMetadataf(metadata map[string]any, format string, msg ...any) *Err {
 	file, line, funcName := callerInfos(2)
 	return &Err{
 		file:     file,
@@ -133,7 +133,7 @@ func NewWithMetadataf(format string, metadata map[string]any, msg ...any) *Err {
 	}
 }
 
-func NewWithCodeAndMetadataf(format, code string, metadata map[string]any, msg ...any) *Err {
+func NewWithCodeAndMetadataf(code string, metadata map[string]any, format string, msg ...any) *Err {
 	file, line, funcName := callerInfos(2)
 	return &Err{
 		file:     file,
@@ -182,7 +182,7 @@ func NewWithAll(skipCaller int, code string, metadata map[string]any, msg ...any
 	}
 }
 
-func NewWithSkipCallerAndCodef(skipCaller int, format, code string, msg ...any) *Err {
+func NewWithSkipCallerAndCodef(skipCaller int, code, format string, msg ...any) *Err {
 	file, line, funcName := callerInfos(skipCaller + 1)
 	return &Err{
 		file:     file,
@@ -205,7 +205,7 @@ func NewWithSkipCallerf(skipCaller int, format string, msg ...any) *Err {
 	}
 }
 
-func NewWithAllf(skipCaller int, format, code string, metadata map[string]any, msg ...any) *Err {
+func NewWithAllf(skipCaller int, code string, metadata map[string]any, format string, msg ...any) *Err {
 	file, line, funcName := callerInfos(skipCaller + 1)
 	return &Err{
 		file:     file,
@@ -250,16 +250,16 @@ func NewWithCodeAndMetadataAsSlice(code string, metadata map[string]any, msg ...
 	return []error{NewWithAll(2, code, metadata, msg...)}
 }
 
-func NewWithCodeAsSlicef(format, code string, msg ...any) []error {
-	return []error{NewWithSkipCallerAndCodef(2, format, code, msg...)}
+func NewWithCodeAsSlicef(code, format string, msg ...any) []error {
+	return []error{NewWithSkipCallerAndCodef(2, code, format, msg...)}
 }
 
-func NewWithMetadataAsSlicef(format string, metadata map[string]any, msg ...any) []error {
-	return []error{NewWithAllf(2, format, "", metadata, msg...)}
+func NewWithMetadataAsSlicef(metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewWithAllf(2, "", metadata, format, msg...)}
 }
 
-func NewWithCodeAndMetadataAsSlicef(format, code string, metadata map[string]any, msg ...any) []error {
-	return []error{NewWithAllf(2, format, code, metadata, msg...)}
+func NewWithCodeAndMetadataAsSlicef(code string, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewWithAllf(2, code, metadata, format, msg...)}
 }
 
 func NewWithSkipCallerAsSlice(skipCaller int, msg ...any) []error {
@@ -274,16 +274,16 @@ func NewWithAllAsSlice(skipCaller int, code string, metadata map[string]any, msg
 	return []error{NewWithAll(skipCaller+1, code, metadata, msg...)}
 }
 
-func NewWithSkipCallerAndCodeAsSlicef(skipCaller int, format, code string, msg ...any) []error {
-	return []error{NewWithSkipCallerAndCodef(skipCaller+1, format, code, msg...)}
+func NewWithSkipCallerAndCodeAsSlicef(skipCaller int, code, format string, msg ...any) []error {
+	return []error{NewWithSkipCallerAndCodef(skipCaller+1, code, format, msg...)}
 }
 
 func NewWithSkipCallerAsSlicef(skipCaller int, format string, msg ...any) []error {
 	return []error{NewWithSkipCallerf(skipCaller+1, format, msg...)}
 }
 
-func NewWithAllAsSlicef(skipCaller int, format, code string, metadata map[string]any, msg ...any) []error {
-	return []error{NewWithAllf(skipCaller+1, format, code, metadata, msg...)}
+func NewWithAllAsSlicef(skipCaller int, code string, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewWithAllf(skipCaller+1, code, metadata, format, msg...)}
 }
 
 func NewWithRawDataAsSlice(file, line, funcName, code, message string, metadata map[string]any, stack []byte) []error {
