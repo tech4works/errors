@@ -16,12 +16,10 @@ import (
 
 func renderStackByPolicy(raw []byte) string {
 	switch getPolicy() {
-	case PolicyDetailed:
-		return normalizeStack(raw)
 	case PolicyNormal:
-		return normalizeStack(filterBoilerplateFrames(raw, 10, true))
+		return normalizeStack(filterBoilerplateFrames(raw, 10))
 	case PolicyNative:
-		return normalizeStack(filterBoilerplateFrames(raw, 20, true))
+		return normalizeStack(filterBoilerplateFrames(raw, 5))
 	default:
 		return normalizeStack(raw)
 	}
@@ -35,10 +33,15 @@ func normalizeStack(raw []byte) string {
 		return "<empty>"
 	}
 
+	// Remove parâmetros das funções, deixando só o nome
+	// Exemplo: "func({{0x...}, ...}, ...)" -> "func()"
+	re := regexp.MustCompile(`\([^)]*\)`)
+	s = re.ReplaceAllString(s, "()")
+
 	return s
 }
 
-func filterBoilerplateFrames(raw []byte, keepFirst int, fromTop bool) []byte {
+func filterBoilerplateFrames(raw []byte, keepFirst int) []byte {
 	lines := strings.Split(string(raw), "\n")
 
 	type frame struct {

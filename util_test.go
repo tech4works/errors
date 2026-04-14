@@ -65,7 +65,7 @@ func TestNormalizeStack_NonEmpty(t *testing.T) {
 
 func TestFilterBoilerplateFrames_NoFrames(t *testing.T) {
 	raw := []byte("no frames here")
-	result := filterBoilerplateFrames(raw, 0, true)
+	result := filterBoilerplateFrames(raw, 0)
 	// fallback: returns raw
 	if string(result) != "no frames here" {
 		t.Errorf("expected raw fallback, got '%s'", result)
@@ -74,13 +74,13 @@ func TestFilterBoilerplateFrames_NoFrames(t *testing.T) {
 
 func TestFilterBoilerplateFrames_WithBoilerplate(t *testing.T) {
 	raw := []byte("runtime.goexit()\n\t/usr/local/go/src/runtime/asm.s:1650 +0x1\nmyapp.myFunc()\n\t/app/main.go:42 +0x1")
-	result := filterBoilerplateFrames(raw, 0, true)
+	result := filterBoilerplateFrames(raw, 0)
 	_ = result
 }
 
 func TestFilterBoilerplateFrames_KeepFirst(t *testing.T) {
 	raw := []byte("myapp.funcA()\n\t/app/a.go:10 +0x1\nmyapp.funcB()\n\t/app/b.go:20 +0x1\nmyapp.funcC()\n\t/app/c.go:30 +0x1")
-	result := filterBoilerplateFrames(raw, 1, true)
+	result := filterBoilerplateFrames(raw, 1)
 	_ = result
 }
 
