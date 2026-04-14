@@ -19,9 +19,9 @@ func renderStackByPolicy(raw []byte) string {
 	case PolicyDetailed:
 		return normalizeStack(raw)
 	case PolicyNormal:
-		return normalizeStack(filterBoilerplateFrames(raw, 0))
+		return normalizeStack(filterBoilerplateFrames(raw, 10, true))
 	case PolicyNative:
-		return normalizeStack(filterBoilerplateFrames(raw, 5))
+		return normalizeStack(filterBoilerplateFrames(raw, 20, true))
 	default:
 		return normalizeStack(raw)
 	}
@@ -38,7 +38,7 @@ func normalizeStack(raw []byte) string {
 	return s
 }
 
-func filterBoilerplateFrames(raw []byte, keepLast int) []byte {
+func filterBoilerplateFrames(raw []byte, keepFirst int, fromTop bool) []byte {
 	lines := strings.Split(string(raw), "\n")
 
 	type frame struct {
@@ -82,9 +82,9 @@ func filterBoilerplateFrames(raw []byte, keepLast int) []byte {
 		return raw
 	}
 
-	// keepLast
-	if keepLast > 0 && len(frames) > keepLast {
-		frames = frames[len(frames)-keepLast:]
+	// keepFirst - mantém os primeiros N frames (do topo)
+	if keepFirst > 0 && len(frames) > keepFirst {
+		frames = frames[:keepFirst]
 	}
 
 	// Remonta mantendo pares
@@ -112,6 +112,7 @@ func isBoilerplate(fnLine, fileLine string) bool {
 		"/net/http/", "net/http.",
 		"/runtime/debug", "runtime/debug.",
 		"/pkg/mod/",
+		"github.com/tech4works/errors", // Própria lib de errors
 	}
 
 	for _, d := range dropContains {
