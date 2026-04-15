@@ -251,9 +251,9 @@ func InheritWithAll(err error, skipCaller int, code string, metadata map[string]
 		return nil
 	}
 
-	e := NewWithAll(skipCaller, code, metadata, msg...)
+	e := NewWithAll(skipCaller+1, code, metadata, msg...)
 
-	extracted, parent := extract(err, skipCaller)
+	extracted, parent := extract(err, skipCaller+1)
 
 	e.parent = parent
 	if e.Message() == "<empty>" {
@@ -276,9 +276,9 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 		return nil
 	}
 
-	e := NewWithSkipCallerAndCode(skipCaller, code, msg...)
+	e := NewWithSkipCallerAndCode(skipCaller+1, code, msg...)
 
-	extracted, parent := extract(err, skipCaller)
+	extracted, parent := extract(err, skipCaller+1)
 
 	e.parent = parent
 	if e.Message() == "<empty>" {

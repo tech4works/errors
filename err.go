@@ -231,59 +231,59 @@ func NewWithRawData(file, line, funcName, code, message string, metadata map[str
 }
 
 func NewAsSlice(msg ...any) []error {
-	return []error{NewWithSkipCaller(2, msg...)}
+	return []error{NewWithSkipCaller(1, msg...)}
 }
 
 func NewAsSlicef(format string, msg ...any) []error {
-	return []error{NewWithSkipCallerf(2, format, msg...)}
+	return []error{NewWithSkipCallerf(1, format, msg...)}
 }
 
 func NewWithCodeAsSlice(code string, msg ...any) []error {
-	return []error{NewWithSkipCallerAndCode(2, code, msg...)}
+	return []error{NewWithSkipCallerAndCode(1, code, msg...)}
 }
 
 func NewWithMetadataAsSlice(metadata map[string]any, msg ...any) []error {
-	return []error{NewWithAll(2, "", metadata, msg...)}
+	return []error{NewWithAll(1, "", metadata, msg...)}
 }
 
 func NewWithCodeAndMetadataAsSlice(code string, metadata map[string]any, msg ...any) []error {
-	return []error{NewWithAll(2, code, metadata, msg...)}
+	return []error{NewWithAll(1, code, metadata, msg...)}
 }
 
 func NewWithCodeAsSlicef(code, format string, msg ...any) []error {
-	return []error{NewWithSkipCallerAndCodef(2, code, format, msg...)}
+	return []error{NewWithSkipCallerAndCodef(1, code, format, msg...)}
 }
 
 func NewWithMetadataAsSlicef(metadata map[string]any, format string, msg ...any) []error {
-	return []error{NewWithAllf(2, "", metadata, format, msg...)}
+	return []error{NewWithAllf(1, "", metadata, format, msg...)}
 }
 
 func NewWithCodeAndMetadataAsSlicef(code string, metadata map[string]any, format string, msg ...any) []error {
-	return []error{NewWithAllf(2, code, metadata, format, msg...)}
+	return []error{NewWithAllf(1, code, metadata, format, msg...)}
 }
 
 func NewWithSkipCallerAsSlice(skipCaller int, msg ...any) []error {
-	return []error{NewWithSkipCaller(skipCaller+1, msg...)}
+	return []error{NewWithSkipCaller(skipCaller, msg...)}
 }
 
 func NewWithSkipCallerAndCodeAsSlice(skipCaller int, code string, msg ...any) []error {
-	return []error{NewWithSkipCallerAndCode(skipCaller+1, code, msg...)}
+	return []error{NewWithSkipCallerAndCode(skipCaller, code, msg...)}
 }
 
 func NewWithAllAsSlice(skipCaller int, code string, metadata map[string]any, msg ...any) []error {
-	return []error{NewWithAll(skipCaller+1, code, metadata, msg...)}
+	return []error{NewWithAll(skipCaller, code, metadata, msg...)}
 }
 
 func NewWithSkipCallerAndCodeAsSlicef(skipCaller int, code, format string, msg ...any) []error {
-	return []error{NewWithSkipCallerAndCodef(skipCaller+1, code, format, msg...)}
+	return []error{NewWithSkipCallerAndCodef(skipCaller, code, format, msg...)}
 }
 
 func NewWithSkipCallerAsSlicef(skipCaller int, format string, msg ...any) []error {
-	return []error{NewWithSkipCallerf(skipCaller+1, format, msg...)}
+	return []error{NewWithSkipCallerf(skipCaller, format, msg...)}
 }
 
 func NewWithAllAsSlicef(skipCaller int, code string, metadata map[string]any, format string, msg ...any) []error {
-	return []error{NewWithAllf(skipCaller+1, code, metadata, format, msg...)}
+	return []error{NewWithAllf(skipCaller, code, metadata, format, msg...)}
 }
 
 func NewWithRawDataAsSlice(file, line, funcName, code, message string, metadata map[string]any, stack []byte) []error {
