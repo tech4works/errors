@@ -286,7 +286,6 @@ func InheritWithSkipCallerAndCode(err error, skipCaller int, code string, msg ..
 	}
 
 	if extracted {
-		e.code = parent.code
 		e.metadata = parent.metadata
 	}
 
