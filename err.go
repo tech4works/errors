@@ -392,7 +392,7 @@ func (e *Err) Metadata() map[string]any {
 func (e *Err) Stack() string {
 	stack := renderStackByPolicy(e.stack)
 	if e.parent != nil {
-		stack += "\n" + inheritSep + e.parent.Stack()
+		stack += "\n" + inheritSep + e.parent.Error()
 	}
 	return stack
 }
