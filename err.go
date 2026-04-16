@@ -230,13 +230,13 @@ func NewWithRawData(file, line, funcName, code, message string, metadata map[str
 	}
 }
 
-func NewByParent(parent *Err, msg ...any) *Err {
+func NewByParent(parent error, msg ...any) *Err {
 	if parent == nil {
 		return New(msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -245,13 +245,13 @@ func NewByParent(parent *Err, msg ...any) *Err {
 	}
 }
 
-func NewByParentf(parent *Err, format string, msg ...any) *Err {
+func NewByParentf(parent error, format string, msg ...any) *Err {
 	if parent == nil {
 		return Newf(format, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -260,13 +260,13 @@ func NewByParentf(parent *Err, format string, msg ...any) *Err {
 	}
 }
 
-func NewByParentWithCode(parent *Err, code string, msg ...any) *Err {
+func NewByParentWithCode(parent error, code string, msg ...any) *Err {
 	if parent == nil {
 		return NewWithCode(code, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -276,13 +276,13 @@ func NewByParentWithCode(parent *Err, code string, msg ...any) *Err {
 	}
 }
 
-func NewByParentWithCodef(parent *Err, code, format string, msg ...any) *Err {
+func NewByParentWithCodef(parent error, code, format string, msg ...any) *Err {
 	if parent == nil {
 		return NewWithCodef(code, format, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -292,13 +292,13 @@ func NewByParentWithCodef(parent *Err, code, format string, msg ...any) *Err {
 	}
 }
 
-func NewByParentWithMetadata(parent *Err, metadata map[string]any, msg ...any) *Err {
+func NewByParentWithMetadata(parent error, metadata map[string]any, msg ...any) *Err {
 	if parent == nil {
 		return NewWithMetadata(metadata, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -308,13 +308,13 @@ func NewByParentWithMetadata(parent *Err, metadata map[string]any, msg ...any) *
 	}
 }
 
-func NewByParentWithMetadataf(parent *Err, metadata map[string]any, format string, msg ...any) *Err {
+func NewByParentWithMetadataf(parent error, metadata map[string]any, format string, msg ...any) *Err {
 	if parent == nil {
 		return NewWithMetadataf(metadata, format, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -324,13 +324,13 @@ func NewByParentWithMetadataf(parent *Err, metadata map[string]any, format strin
 	}
 }
 
-func NewByParentWithCodeAndMetadata(parent *Err, code string, metadata map[string]any, msg ...any) *Err {
+func NewByParentWithCodeAndMetadata(parent error, code string, metadata map[string]any, msg ...any) *Err {
 	if parent == nil {
 		return NewWithCodeAndMetadata(code, metadata, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
@@ -341,13 +341,13 @@ func NewByParentWithCodeAndMetadata(parent *Err, code string, metadata map[strin
 	}
 }
 
-func NewByParentWithCodeAndMetadataf(parent *Err, code string, metadata map[string]any, format string, msg ...any) *Err {
+func NewByParentWithCodeAndMetadataf(parent error, code string, metadata map[string]any, format string, msg ...any) *Err {
 	if parent == nil {
 		return NewWithCodeAndMetadataf(code, metadata, format, msg...)
 	}
 	file, line, funcName := callerInfos(2)
 	return &Err{
-		parent:   parent,
+		parent:   Wrap(parent),
 		file:     file,
 		line:     line,
 		funcName: funcName,
