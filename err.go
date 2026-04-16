@@ -499,19 +499,11 @@ func (e *Err) Error() string {
 		return s
 	}
 
-	code := ""
-	if e.HasCode() {
-		code = "[CODE]: " + e.code + " "
-	}
-	metadata := ""
-	if e.HasMetadata() {
-		metadata = " [METADATA]: " + toString(e.Metadata())
-	}
 	stack := e.Stack()
 	if e.parent != nil {
 		stack += "\n" + inheritSep + e.parent.Error()
 	}
-	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + stack
+	return e.Description() + " [STACK]: " + stack
 }
 
 func (e *Err) Raw() string {
@@ -519,6 +511,10 @@ func (e *Err) Raw() string {
 		return e.Error()
 	}
 
+	return e.Description() + " [STACK]: " + normalizeStack(e.stack)
+}
+
+func (e *Err) Description() string {
 	code := ""
 	if e.HasCode() {
 		code = "[CODE]: " + e.code + " "
@@ -527,11 +523,11 @@ func (e *Err) Raw() string {
 	if e.HasMetadata() {
 		metadata = " [METADATA]: " + toString(e.Metadata())
 	}
-	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + normalizeStack(e.stack)
+	return code + "[CAUSE]: " + e.Cause().Error() + metadata
 }
 
-func (e *Err) PrintStackTrace() {
-	fmt.Println(e.stack)
+func (e *Err) PrintStack() {
+	fmt.Println(e.Stack())
 }
 
 func (e *Err) PrintCause() {
@@ -611,6 +607,7 @@ func (e *Err) StackAsSlice() []string {
 	if e.parent != nil {
 		parentLines := e.parent.StackAsSlice()
 		result = append(result, "---------------- [INHERITED BY]:")
+		result = append(result, e.parent.Description()+" [STACK]:")
 		result = append(result, parentLines...)
 	}
 
