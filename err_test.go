@@ -295,15 +295,17 @@ func TestErrError(t *testing.T) {
 	}
 }
 
-func TestErrErrorFormatted(t *testing.T) {
+func TestErrStackAsSlice(t *testing.T) {
 	err := New("test error")
-	s := err.ErrorFormatted()
-	if s == "" {
-		t.Error("expected non-empty ErrorFormatted() string")
+	stack := err.StackAsSlice()
+	if len(stack) == 0 {
+		t.Error("expected non-empty StackAsSlice()")
 	}
-	// Verifica que não contém \t ou \n literais (escapados)
-	if strings.Contains(s, "\\t") || strings.Contains(s, "\\n") {
-		t.Error("expected ErrorFormatted() to not contain escaped tabs or newlines")
+	// Verifica que não contém \t ou \n
+	for _, line := range stack {
+		if strings.Contains(line, "\t") || strings.Contains(line, "\n") {
+			t.Errorf("expected StackAsSlice() line to not contain tabs or newlines, got: %s", line)
+		}
 	}
 }
 
@@ -402,14 +404,10 @@ func TestErrStack(t *testing.T) {
 }
 
 func TestErrStackFormatted(t *testing.T) {
-	err := New("stack formatted test")
-	stack := err.StackFormatted()
+	err := New("stack test")
+	stack := err.Stack()
 	if stack == "" {
-		t.Error("expected non-empty StackFormatted()")
-	}
-	// Verifica que não contém \t ou \n literais (escapados)
-	if strings.Contains(stack, "\\t") || strings.Contains(stack, "\\n") {
-		t.Error("expected StackFormatted() to not contain escaped tabs or newlines")
+		t.Error("expected non-empty Stack()")
 	}
 }
 
@@ -448,13 +446,9 @@ func TestErrWithParent(t *testing.T) {
 func TestErrWithParentFormatted(t *testing.T) {
 	parent := New("parent error")
 	child := Inherit(parent, "child error")
-	s := child.ErrorFormatted()
+	s := child.Error()
 	if s == "" {
-		t.Error("expected non-empty ErrorFormatted() with parent")
-	}
-	// Verifica que não contém \t ou \n literais (escapados)
-	if strings.Contains(s, "\\t") || strings.Contains(s, "\\n") {
-		t.Error("expected ErrorFormatted() with parent to not contain escaped tabs or newlines")
+		t.Error("expected non-empty error with parent")
 	}
 }
 

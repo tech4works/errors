@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync/atomic"
 )
 
@@ -513,33 +514,6 @@ func (e *Err) Error() string {
 	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + stack
 }
 
-func (e *Err) ErrorFormatted() string {
-	if e.target {
-		s := "[TARGET]: true"
-		if e.HasCode() {
-			s += " [CODE]: " + e.code
-		}
-		if len(e.message) > 0 {
-			s += " [MESSAGE]: " + e.message
-		}
-		return s
-	}
-
-	code := ""
-	if e.HasCode() {
-		code = "[CODE]: " + e.code + " "
-	}
-	metadata := ""
-	if e.HasMetadata() {
-		metadata = " [METADATA]: " + toString(e.Metadata())
-	}
-	stack := e.StackFormatted()
-	if e.parent != nil {
-		stack += "\n" + inheritSep + e.parent.ErrorFormatted()
-	}
-	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + stack
-}
-
 func (e *Err) Raw() string {
 	if e.target {
 		return e.Error()
@@ -620,13 +594,27 @@ func (e *Err) Stack() string {
 	return stack
 }
 
-func (e *Err) StackFormatted() string {
+func (e *Err) StackAsSlice() []string {
 	stack := renderStackByPolicy(e.stack)
-	stack = formatStackTrace(stack)
-	if e.parent != nil {
-		stack += "\n" + inheritSep + e.parent.ErrorFormatted()
+	lines := strings.Split(stack, "\n")
+
+	var result []string
+	for _, line := range lines {
+		// Remove \t e \n, trim spaces
+		cleaned := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(line, "\t", ""), "\n", ""))
+		if cleaned != "" {
+			result = append(result, cleaned)
+		}
 	}
-	return stack
+
+	// Se tem parent, adiciona as linhas do parent também
+	if e.parent != nil {
+		parentLines := e.parent.StackAsSlice()
+		result = append(result, "---------------- [INHERITED BY]:")
+		result = append(result, parentLines...)
+	}
+
+	return result
 }
 
 func (e *Err) Snapshot() string {
