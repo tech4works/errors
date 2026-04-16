@@ -51,7 +51,7 @@ func TargetWithMessage(msg ...any) *Err {
 }
 
 func New(msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -62,7 +62,7 @@ func New(msg ...any) *Err {
 }
 
 func NewWithCode(code string, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -74,7 +74,7 @@ func NewWithCode(code string, msg ...any) *Err {
 }
 
 func NewWithMetadata(metadata map[string]any, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -86,7 +86,7 @@ func NewWithMetadata(metadata map[string]any, msg ...any) *Err {
 }
 
 func NewWithCodeAndMetadata(code string, metadata map[string]any, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -99,7 +99,7 @@ func NewWithCodeAndMetadata(code string, metadata map[string]any, msg ...any) *E
 }
 
 func Newf(format string, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -110,7 +110,7 @@ func Newf(format string, msg ...any) *Err {
 }
 
 func NewWithCodef(code, format string, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -122,7 +122,7 @@ func NewWithCodef(code, format string, msg ...any) *Err {
 }
 
 func NewWithMetadataf(metadata map[string]any, format string, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -134,7 +134,7 @@ func NewWithMetadataf(metadata map[string]any, format string, msg ...any) *Err {
 }
 
 func NewWithCodeAndMetadataf(code string, metadata map[string]any, format string, msg ...any) *Err {
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		file:     file,
 		line:     line,
@@ -234,7 +234,7 @@ func NewByParent(parent error, msg ...any) *Err {
 	if parent == nil {
 		return New(msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -249,7 +249,7 @@ func NewByParentf(parent error, format string, msg ...any) *Err {
 	if parent == nil {
 		return Newf(format, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -264,7 +264,7 @@ func NewByParentWithCode(parent error, code string, msg ...any) *Err {
 	if parent == nil {
 		return NewWithCode(code, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -280,7 +280,7 @@ func NewByParentWithCodef(parent error, code, format string, msg ...any) *Err {
 	if parent == nil {
 		return NewWithCodef(code, format, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -296,7 +296,7 @@ func NewByParentWithMetadata(parent error, metadata map[string]any, msg ...any) 
 	if parent == nil {
 		return NewWithMetadata(metadata, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -312,7 +312,7 @@ func NewByParentWithMetadataf(parent error, metadata map[string]any, format stri
 	if parent == nil {
 		return NewWithMetadataf(metadata, format, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -328,7 +328,7 @@ func NewByParentWithCodeAndMetadata(parent error, code string, metadata map[stri
 	if parent == nil {
 		return NewWithCodeAndMetadata(code, metadata, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
@@ -345,7 +345,7 @@ func NewByParentWithCodeAndMetadataf(parent error, code string, metadata map[str
 	if parent == nil {
 		return NewWithCodeAndMetadataf(code, metadata, format, msg...)
 	}
-	file, line, funcName := callerInfos(2)
+	file, line, funcName := callerInfos(1)
 	return &Err{
 		parent:   Wrap(parent),
 		file:     file,
