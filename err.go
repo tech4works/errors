@@ -420,6 +420,7 @@ func NewWithRawDataAsSlice(file, line, funcName, code, message string, metadata 
 
 func Recovery(msg ...any) error {
 	if r := recover(); r != nil {
+		msg = append(msg, fmt.Sprintf("recovery: %v", r))
 		return NewWithSkipCaller(1, msg...)
 	}
 	return nil
@@ -427,6 +428,7 @@ func Recovery(msg ...any) error {
 
 func RecoveryWithCode(code string, msg ...any) error {
 	if r := recover(); r != nil {
+		msg = append(msg, fmt.Sprintf("recovery: %v", r))
 		return NewWithSkipCallerAndCode(1, code, msg...)
 	}
 	return nil
@@ -434,6 +436,7 @@ func RecoveryWithCode(code string, msg ...any) error {
 
 func RecoveryWithMetadata(metadata map[string]any, msg ...any) error {
 	if r := recover(); r != nil {
+		msg = append(msg, fmt.Sprintf("recovery: %v", r))
 		return NewWithAll(1, "", metadata, msg...)
 	}
 	return nil
@@ -441,6 +444,7 @@ func RecoveryWithMetadata(metadata map[string]any, msg ...any) error {
 
 func RecoveryWithCodeAndMetadata(code string, metadata map[string]any, msg ...any) error {
 	if r := recover(); r != nil {
+		msg = append(msg, fmt.Sprintf("recovery: %v", r))
 		return NewWithAll(1, code, metadata, msg...)
 	}
 	return nil
@@ -448,6 +452,8 @@ func RecoveryWithCodeAndMetadata(code string, metadata map[string]any, msg ...an
 
 func Recoveryf(format string, msg ...any) error {
 	if r := recover(); r != nil {
+		format = format + " recovery: %v"
+		msg = append(msg, r)
 		return NewWithSkipCallerf(1, format, msg...)
 	}
 	return nil
@@ -455,6 +461,8 @@ func Recoveryf(format string, msg ...any) error {
 
 func RecoveryWithCodef(code, format string, msg ...any) error {
 	if r := recover(); r != nil {
+		format = format + " recovery: %v"
+		msg = append(msg, r)
 		return NewWithSkipCallerAndCodef(1, code, format, msg...)
 	}
 	return nil
@@ -462,6 +470,8 @@ func RecoveryWithCodef(code, format string, msg ...any) error {
 
 func RecoveryWithMetadataf(metadata map[string]any, format string, msg ...any) error {
 	if r := recover(); r != nil {
+		format = format + " recovery: %v"
+		msg = append(msg, r)
 		return NewWithAllf(1, "", metadata, format, msg...)
 	}
 	return nil
@@ -469,6 +479,8 @@ func RecoveryWithMetadataf(metadata map[string]any, format string, msg ...any) e
 
 func RecoveryWithCodeAndMetadataf(code string, metadata map[string]any, format string, msg ...any) error {
 	if r := recover(); r != nil {
+		format = format + " recovery: %v"
+		msg = append(msg, r)
 		return NewWithAllf(1, code, metadata, format, msg...)
 	}
 	return nil
