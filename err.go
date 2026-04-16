@@ -230,6 +230,134 @@ func NewWithRawData(file, line, funcName, code, message string, metadata map[str
 	}
 }
 
+func NewByParent(parent *Err, msg ...any) *Err {
+	if parent == nil {
+		return New(msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentf(parent *Err, format string, msg ...any) *Err {
+	if parent == nil {
+		return Newf(format, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithCode(parent *Err, code string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithCode(code, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithCodef(parent *Err, code, format string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithCodef(code, format, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithMetadata(parent *Err, metadata map[string]any, msg ...any) *Err {
+	if parent == nil {
+		return NewWithMetadata(metadata, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessage(msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithMetadataf(parent *Err, metadata map[string]any, format string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithMetadataf(metadata, format, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithCodeAndMetadata(parent *Err, code string, metadata map[string]any, msg ...any) *Err {
+	if parent == nil {
+		return NewWithCodeAndMetadata(code, metadata, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithCodeAndMetadataf(parent *Err, code string, metadata map[string]any, format string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithCodeAndMetadataf(code, metadata, format, msg...)
+	}
+	file, line, funcName := callerInfos(2)
+	return &Err{
+		parent:   parent,
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
 func NewAsSlice(msg ...any) []error {
 	return []error{NewWithSkipCaller(1, msg...)}
 }
@@ -288,6 +416,62 @@ func NewWithAllAsSlicef(skipCaller int, code string, metadata map[string]any, fo
 
 func NewWithRawDataAsSlice(file, line, funcName, code, message string, metadata map[string]any, stack []byte) []error {
 	return []error{NewWithRawData(file, line, funcName, code, message, metadata, stack)}
+}
+
+func Recovery(msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithSkipCaller(1, msg...)
+	}
+	return nil
+}
+
+func RecoveryWithCode(code string, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithSkipCallerAndCode(1, code, msg...)
+	}
+	return nil
+}
+
+func RecoveryWithMetadata(metadata map[string]any, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithAll(1, "", metadata, msg...)
+	}
+	return nil
+}
+
+func RecoveryWithCodeAndMetadata(code string, metadata map[string]any, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithAll(1, code, metadata, msg...)
+	}
+	return nil
+}
+
+func Recoveryf(format string, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithSkipCallerf(1, format, msg...)
+	}
+	return nil
+}
+
+func RecoveryWithCodef(code, format string, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithSkipCallerAndCodef(1, code, format, msg...)
+	}
+	return nil
+}
+
+func RecoveryWithMetadataf(metadata map[string]any, format string, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithAllf(1, "", metadata, format, msg...)
+	}
+	return nil
+}
+
+func RecoveryWithCodeAndMetadataf(code string, metadata map[string]any, format string, msg ...any) error {
+	if r := recover(); r != nil {
+		return NewWithAllf(1, code, metadata, format, msg...)
+	}
+	return nil
 }
 
 func (e *Err) Error() string {

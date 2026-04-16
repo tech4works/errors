@@ -419,3 +419,155 @@ func TestErrWithParent(t *testing.T) {
 		t.Error("expected non-empty error with parent")
 	}
 }
+
+func TestNewByParent(t *testing.T) {
+	parent := New("parent error")
+	child := NewByParent(parent, "child error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if child.HasCode() {
+		t.Error("expected no code to be inherited")
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata to be inherited")
+	}
+}
+
+func TestNewByParentf(t *testing.T) {
+	parent := New("parent error")
+	child := NewByParentf(parent, "child %s", "error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if child.HasCode() {
+		t.Error("expected no code to be inherited")
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata to be inherited")
+	}
+}
+
+func TestNewByParentWithCode(t *testing.T) {
+	parent := New("parent error")
+	child := NewByParentWithCode(parent, "ERR_CODE", "child error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata to be inherited")
+	}
+}
+
+func TestNewByParentWithCodef(t *testing.T) {
+	parent := New("parent error")
+	child := NewByParentWithCodef(parent, "ERR_CODE", "child %s", "error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata to be inherited")
+	}
+}
+
+func TestNewByParentWithMetadata(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	child := NewByParentWithMetadata(parent, metadata, "child error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+	if child.HasCode() {
+		t.Error("expected no code to be inherited")
+	}
+}
+
+func TestNewByParentWithMetadataf(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	child := NewByParentWithMetadataf(parent, metadata, "child %s", "error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+	if child.HasCode() {
+		t.Error("expected no code to be inherited")
+	}
+}
+
+func TestNewByParentWithCodeAndMetadata(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	child := NewByParentWithCodeAndMetadata(parent, "ERR_CODE", metadata, "child error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+}
+
+func TestNewByParentWithCodeAndMetadataf(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	child := NewByParentWithCodeAndMetadataf(parent, "ERR_CODE", metadata, "child %s", "error")
+	if child.parent != parent {
+		t.Error("expected parent to be set")
+	}
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+}
