@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -294,6 +295,18 @@ func TestErrError(t *testing.T) {
 	}
 }
 
+func TestErrErrorFormatted(t *testing.T) {
+	err := New("test error")
+	s := err.ErrorFormatted()
+	if s == "" {
+		t.Error("expected non-empty ErrorFormatted() string")
+	}
+	// Verifica que não contém \t ou \n literais (escapados)
+	if strings.Contains(s, "\\t") || strings.Contains(s, "\\n") {
+		t.Error("expected ErrorFormatted() to not contain escaped tabs or newlines")
+	}
+}
+
 func TestErrErrorWithCode(t *testing.T) {
 	err := NewWithCode("C1", "msg")
 	s := err.Error()
@@ -388,6 +401,18 @@ func TestErrStack(t *testing.T) {
 	}
 }
 
+func TestErrStackFormatted(t *testing.T) {
+	err := New("stack formatted test")
+	stack := err.StackFormatted()
+	if stack == "" {
+		t.Error("expected non-empty StackFormatted()")
+	}
+	// Verifica que não contém \t ou \n literais (escapados)
+	if strings.Contains(stack, "\\t") || strings.Contains(stack, "\\n") {
+		t.Error("expected StackFormatted() to not contain escaped tabs or newlines")
+	}
+}
+
 func TestErrHasMessage(t *testing.T) {
 	err := New("msg")
 	if !err.HasMessage() {
@@ -417,6 +442,19 @@ func TestErrWithParent(t *testing.T) {
 	s := child.Error()
 	if s == "" {
 		t.Error("expected non-empty error with parent")
+	}
+}
+
+func TestErrWithParentFormatted(t *testing.T) {
+	parent := New("parent error")
+	child := Inherit(parent, "child error")
+	s := child.ErrorFormatted()
+	if s == "" {
+		t.Error("expected non-empty ErrorFormatted() with parent")
+	}
+	// Verifica que não contém \t ou \n literais (escapados)
+	if strings.Contains(s, "\\t") || strings.Contains(s, "\\n") {
+		t.Error("expected ErrorFormatted() with parent to not contain escaped tabs or newlines")
 	}
 }
 

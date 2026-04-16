@@ -501,6 +501,33 @@ func (e *Err) Error() string {
 	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + stack
 }
 
+func (e *Err) ErrorFormatted() string {
+	if e.target {
+		s := "[TARGET]: true"
+		if e.HasCode() {
+			s += " [CODE]: " + e.code
+		}
+		if len(e.message) > 0 {
+			s += " [MESSAGE]: " + e.message
+		}
+		return s
+	}
+
+	code := ""
+	if e.HasCode() {
+		code = "[CODE]: " + e.code + " "
+	}
+	metadata := ""
+	if e.HasMetadata() {
+		metadata = " [METADATA]: " + toString(e.Metadata())
+	}
+	stack := e.StackFormatted()
+	if e.parent != nil {
+		stack += "\n" + inheritSep + e.parent.ErrorFormatted()
+	}
+	return code + "[CAUSE]: " + e.Cause().Error() + metadata + " [STACK]: " + stack
+}
+
 func (e *Err) Raw() string {
 	if e.target {
 		return e.Error()
@@ -577,6 +604,15 @@ func (e *Err) Stack() string {
 	stack := renderStackByPolicy(e.stack)
 	if e.parent != nil {
 		stack += "\n" + inheritSep + e.parent.Error()
+	}
+	return stack
+}
+
+func (e *Err) StackFormatted() string {
+	stack := renderStackByPolicy(e.stack)
+	stack = formatStackTrace(stack)
+	if e.parent != nil {
+		stack += "\n" + inheritSep + e.parent.ErrorFormatted()
 	}
 	return stack
 }

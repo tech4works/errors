@@ -72,6 +72,14 @@ func normalizeStack(raw []byte) string {
 	return s
 }
 
+func formatStackTrace(s string) string {
+	// Converte \t e \n literais em quebras de linha e indentação reais
+	// Exemplo: "line1\n\tline2" -> "line1\n  line2"
+	s = strings.ReplaceAll(s, "\\n", "\n")
+	s = strings.ReplaceAll(s, "\\t", "  ") // 2 espaços por tab
+	return s
+}
+
 func sanitizeFramesInStack(s string) string {
 	frameMutex.RLock()
 	defer frameMutex.RUnlock()

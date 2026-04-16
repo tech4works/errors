@@ -14,7 +14,7 @@ const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 	`(?: \[METADATA]: (.+?))?` + // 6: metadata (optional)
 	` \[STACK]:\s*([\s\S]+)$` // 7: stack
 
-const inheritSep = "----------------\n\t\t|\tinherited by: "
+const inheritSep = "----------------\n\t\t|\t[INHERITED BY]: "
 
 var compiledRegex = regexp.MustCompile(regex)
 
