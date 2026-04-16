@@ -2,6 +2,7 @@ package errors
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -61,11 +62,46 @@ func TestNormalizeStack_NonEmpty(t *testing.T) {
 	}
 }
 
+func TestNormalizeStack_RemovesHexOffsets(t *testing.T) {
+	input := []byte("myapp.myFunc()\n\t/app/main.go:42 +0x5e")
+	result := normalizeStack(input)
+
+	if strings.Contains(result, "+0x5e") {
+		t.Errorf("expected hex offset to be removed, got '%s'", result)
+	}
+
+	if !strings.Contains(result, "/app/main.go:42") {
+		t.Errorf("expected line number to be preserved, got '%s'", result)
+	}
+}
+
+func TestNormalizeStack_RemovesMultipleHexOffsets(t *testing.T) {
+	input := []byte("func1() +0x5e\nfunc2() +0xe3\nfunc3() +0x1a2b")
+	result := normalizeStack(input)
+
+	if strings.Contains(result, "+0x") {
+		t.Errorf("expected all hex offsets to be removed, got '%s'", result)
+	}
+
+	if !strings.Contains(result, "func1()") || !strings.Contains(result, "func2()") || !strings.Contains(result, "func3()") {
+		t.Errorf("expected function names to be preserved, got '%s'", result)
+	}
+}
+
+func TestNormalizeStack_PreservesLineNumbers(t *testing.T) {
+	input := []byte("/path/file.go:123 +0x5e\n/path/file.go:456 +0xe3")
+	result := normalizeStack(input)
+
+	if !strings.Contains(result, ":123") || !strings.Contains(result, ":456") {
+		t.Errorf("expected line numbers to be preserved, got '%s'", result)
+	}
+}
+
 // --- filterBoilerplateFrames ---
 
 func TestFilterBoilerplateFrames_NoFrames(t *testing.T) {
 	raw := []byte("no frames here")
-	result := filterBoilerplateFrames(raw, 0)
+	result := sanitizeBoilerplateFrames(raw, 0)
 	// fallback: returns raw
 	if string(result) != "no frames here" {
 		t.Errorf("expected raw fallback, got '%s'", result)
@@ -74,13 +110,13 @@ func TestFilterBoilerplateFrames_NoFrames(t *testing.T) {
 
 func TestFilterBoilerplateFrames_WithBoilerplate(t *testing.T) {
 	raw := []byte("runtime.goexit()\n\t/usr/local/go/src/runtime/asm.s:1650 +0x1\nmyapp.myFunc()\n\t/app/main.go:42 +0x1")
-	result := filterBoilerplateFrames(raw, 0)
+	result := sanitizeBoilerplateFrames(raw, 0)
 	_ = result
 }
 
 func TestFilterBoilerplateFrames_KeepFirst(t *testing.T) {
 	raw := []byte("myapp.funcA()\n\t/app/a.go:10 +0x1\nmyapp.funcB()\n\t/app/b.go:20 +0x1\nmyapp.funcC()\n\t/app/c.go:30 +0x1")
-	result := filterBoilerplateFrames(raw, 1)
+	result := sanitizeBoilerplateFrames(raw, 1)
 	_ = result
 }
 
@@ -408,4 +444,136 @@ func TestOptionalField_NonEmpty(t *testing.T) {
 	if result != "label: value" {
 		t.Errorf("expected 'label: value', got '%s'", result)
 	}
+}
+
+// --- SetPrefixesToRemove ---
+
+func TestSetPrefixesToRemove_RemovesSinglePrefix(t *testing.T) {
+	SetPrefixesToSanitize("github.com/tech4works/")
+	input := "github.com/tech4works/errors.New()"
+	result := sanitizePrefixes(input)
+	expected := "errors.New()"
+	if result != expected {
+		t.Errorf("expected '%s', got '%s'", expected, result)
+	}
+	SetPrefixesToSanitize() // reset
+}
+
+func TestSetPrefixesToRemove_RemovesMultiplePrefixes(t *testing.T) {
+	SetPrefixesToSanitize("github.com/tech4works/", "sdk-manas")
+	input := "github.com/tech4works/sdk-manas/api.Router()"
+	result := sanitizePrefixes(input)
+	expected := "/api.Router()"
+	if result != expected {
+		t.Errorf("expected '%s', got '%s'", expected, result)
+	}
+	SetPrefixesToSanitize() // reset
+}
+
+func TestSetPrefixesToRemove_NoMatch(t *testing.T) {
+	SetPrefixesToSanitize("github.com/tech4works/")
+	input := "myapp.myFunc()"
+	result := sanitizePrefixes(input)
+	if result != input {
+		t.Errorf("expected '%s', got '%s'", input, result)
+	}
+	SetPrefixesToSanitize() // reset
+}
+
+func TestSetPrefixesToRemove_InStack(t *testing.T) {
+	SetPrefixesToSanitize("github.com/tech4works/")
+	raw := []byte("github.com/tech4works/errors.New()\n\t/path/file.go:10 +0x1")
+	result := renderStackByPolicy(raw)
+	if contains(result, "github.com/tech4works/") {
+		t.Errorf("expected prefix to be removed from stack, got '%s'", result)
+	}
+	SetPrefixesToSanitize() // reset
+}
+
+func TestIsBoilerplate_SdkManas(t *testing.T) {
+	if !isBoilerplate("github.com/tech4works/sdk-manas/api.Router()", "\t/go/pkg/mod/github.com/tech4works/sdk-manas@v0.0.0/api/router.go:205") {
+		t.Error("expected true for sdk-manas boilerplate")
+	}
+}
+
+// --- SetFrameToSanitize ---
+
+func TestSetFrameToSanitize_RemovesSingleFrame(t *testing.T) {
+	SetFrameToSanitize("runtime.goexit")
+	raw := []byte("runtime.goexit()\n\t/usr/local/go/src/runtime/asm.s:1650 +0x1\nmyapp.myFunc()\n\t/app/main.go:42 +0x1")
+	result := normalizeStack(raw)
+
+	if strings.Contains(result, "runtime.goexit") {
+		t.Errorf("expected 'runtime.goexit' frame to be removed, got: %s", result)
+	}
+
+	if !strings.Contains(result, "myapp.myFunc") {
+		t.Errorf("expected 'myapp.myFunc' frame to be preserved, got: %s", result)
+	}
+
+	SetFrameToSanitize() // reset
+}
+
+func TestSetFrameToSanitize_RemovesMultipleFrames(t *testing.T) {
+	SetFrameToSanitize("runtime.goexit", "testing.tRunner")
+	raw := []byte("runtime.goexit()\n\t/usr/local/go/src/runtime/asm.s:1650 +0x1\ntesting.tRunner()\n\t/usr/local/go/src/testing/testing.go:1234 +0x1\nmyapp.myFunc()\n\t/app/main.go:42 +0x1")
+	result := normalizeStack(raw)
+
+	if strings.Contains(result, "runtime.goexit") {
+		t.Errorf("expected 'runtime.goexit' frame to be removed")
+	}
+
+	if strings.Contains(result, "testing.tRunner") {
+		t.Errorf("expected 'testing.tRunner' frame to be removed")
+	}
+
+	if !strings.Contains(result, "myapp.myFunc") {
+		t.Errorf("expected 'myapp.myFunc' frame to be preserved")
+	}
+
+	SetFrameToSanitize() // reset
+}
+
+func TestSetFrameToSanitize_NoMatch(t *testing.T) {
+	SetFrameToSanitize("nonexistent.frame")
+	raw := []byte("myapp.myFunc()\n\t/app/main.go:42 +0x1")
+	result := normalizeStack(raw)
+
+	if !strings.Contains(result, "myapp.myFunc") {
+		t.Errorf("expected 'myapp.myFunc' frame to be preserved when no match")
+	}
+
+	SetFrameToSanitize() // reset
+}
+
+func TestSetFrameToSanitize_InStack(t *testing.T) {
+	SetFrameToSanitize("github.com/tech4works/sdk-manas")
+	raw := []byte("github.com/tech4works/sdk-manas/api.Router()\n\t/go/pkg/mod/github.com/tech4works/sdk-manas@v0.0.0/api/router.go:205 +0xe3\nmyapp.myFunc()\n\t/app/main.go:42 +0x1")
+	result := renderStackByPolicy(raw)
+
+	if strings.Contains(result, "sdk-manas") {
+		t.Errorf("expected 'sdk-manas' frame to be removed from stack, got: %s", result)
+	}
+
+	if !strings.Contains(result, "myapp.myFunc") {
+		t.Errorf("expected 'myapp.myFunc' frame to be preserved, got: %s", result)
+	}
+
+	SetFrameToSanitize() // reset
+}
+
+func TestSetFrameToSanitize_PartialMatch(t *testing.T) {
+	SetFrameToSanitize("gin")
+	raw := []byte("github.com/gin-gonic/gin.().Next()\n\t/go/pkg/mod/github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f\nmyapp.myFunc()\n\t/app/main.go:42 +0x1")
+	result := normalizeStack(raw)
+
+	if strings.Contains(result, "gin.().Next") {
+		t.Errorf("expected frame containing 'gin' to be removed")
+	}
+
+	if !strings.Contains(result, "myapp.myFunc") {
+		t.Errorf("expected 'myapp.myFunc' frame to be preserved")
+	}
+
+	SetFrameToSanitize() // reset
 }

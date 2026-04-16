@@ -12,14 +12,34 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 )
+
+var (
+	prefixesToRemove []string
+	prefixMutex      sync.RWMutex
+	framesToSanitize []string
+	frameMutex       sync.RWMutex
+)
+
+func SetPrefixesToSanitize(prefixes ...string) {
+	prefixMutex.Lock()
+	defer prefixMutex.Unlock()
+	prefixesToRemove = prefixes
+}
+
+func SetFrameToSanitize(frames ...string) {
+	frameMutex.Lock()
+	defer frameMutex.Unlock()
+	framesToSanitize = frames
+}
 
 func renderStackByPolicy(raw []byte) string {
 	switch getPolicy() {
 	case PolicyNormal:
-		return normalizeStack(filterBoilerplateFrames(raw, 10))
+		return normalizeStack(sanitizeBoilerplateFrames(raw, 10))
 	case PolicyNative:
-		return normalizeStack(filterBoilerplateFrames(raw, 5))
+		return normalizeStack(sanitizeBoilerplateFrames(raw, 5))
 	default:
 		return normalizeStack(raw)
 	}
@@ -33,15 +53,74 @@ func normalizeStack(raw []byte) string {
 		return "<empty>"
 	}
 
+	// Sanitize frames that should be removed entirely
+	s = sanitizeFramesInStack(s)
+
 	// Remove parâmetros das funções, deixando só o nome
 	// Exemplo: "func({{0x...}, ...}, ...)" -> "func()"
 	re := regexp.MustCompile(`\([^)]*\)`)
 	s = re.ReplaceAllString(s, "()")
 
+	// Remove offsets hexadecimais (+0x5e, +0xe3, etc)
+	// Exemplo: "/path/file.go:42 +0x5e" -> "/path/file.go:42"
+	hexOffsetRe := regexp.MustCompile(`\s+\+0x[0-9a-fA-F]+`)
+	s = hexOffsetRe.ReplaceAllString(s, "")
+
+	// Sanitiza prefixos configurados
+	s = sanitizePrefixes(s)
+
 	return s
 }
 
-func filterBoilerplateFrames(raw []byte, keepFirst int) []byte {
+func sanitizeFramesInStack(s string) string {
+	frameMutex.RLock()
+	defer frameMutex.RUnlock()
+
+	if len(framesToSanitize) == 0 {
+		return s
+	}
+
+	lines := strings.Split(s, "\n")
+	var result []string
+
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		shouldSkip := false
+
+		// Check if current line matches any frame to sanitize
+		for _, frameMatch := range framesToSanitize {
+			if strings.Contains(line, frameMatch) {
+				shouldSkip = true
+				break
+			}
+		}
+
+		// If this line matches, skip it and the next line (file line)
+		if shouldSkip {
+			// Skip the next line if it looks like a file line
+			if i+1 < len(lines) && looksLikeFileLine(lines[i+1]) {
+				i++ // Skip the file line
+			}
+			continue
+		}
+
+		result = append(result, line)
+	}
+
+	return strings.Join(result, "\n")
+}
+
+func sanitizePrefixes(s string) string {
+	prefixMutex.RLock()
+	defer prefixMutex.RUnlock()
+
+	for _, prefix := range prefixesToRemove {
+		s = strings.ReplaceAll(s, prefix, "")
+	}
+	return s
+}
+
+func sanitizeBoilerplateFrames(raw []byte, keepFirst int) []byte {
 	lines := strings.Split(string(raw), "\n")
 
 	type frame struct {
