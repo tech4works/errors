@@ -2,6 +2,7 @@ package errors
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -509,6 +510,39 @@ func TestJoin(t *testing.T) {
 	if joined == nil {
 		t.Error("expected non-nil joined error")
 	}
+	// deve retornar *Err, não errors.New da stdlib
+	var e *Err
+	if !As(joined, &e) {
+		t.Error("expected Join to return *Err")
+	}
+}
+
+func TestJoin_Empty(t *testing.T) {
+	if Join([]error{}, ", ") != nil {
+		t.Error("expected Join(empty) to be nil")
+	}
+}
+
+func TestJoin_IsRecognized(t *testing.T) {
+	target := TargetWithMessage("a")
+	errs := []error{New("a"), New("b")}
+	joined := Join(errs, ", ")
+	// Is deve conseguir identificar o erro dentro do join
+	if !Is(joined, target) {
+		t.Error("expected Is to find target message inside joined error")
+	}
+}
+
+func TestJoin_WrapPreservesStructure(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	joined := Join(errs, " | ")
+	wrapped := Wrap(joined)
+	if wrapped == nil {
+		t.Error("expected Wrap of joined *Err to be non-nil")
+	}
+	if wrapped.Message() == "" {
+		t.Error("expected non-empty message after Wrap")
+	}
 }
 
 func TestJoinToString_Empty(t *testing.T) {
@@ -652,7 +686,381 @@ func TestJoinInheritWithSkipCallerAndCode(t *testing.T) {
 	}
 }
 
-// --- extract with regex (plain error that matches the format) ---
+// --- Chain / ChainFromSlice ---
+
+func TestChain_Empty(t *testing.T) {
+	if Chain() != nil {
+		t.Error("expected nil for no args")
+	}
+}
+
+func TestChain_Single(t *testing.T) {
+	result := Chain(New("only"))
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "only" {
+		t.Errorf("expected 'only', got '%s'", result.Message())
+	}
+	if result.parent != nil {
+		t.Error("expected no parent for single error")
+	}
+}
+
+func TestChain_Order(t *testing.T) {
+	result := Chain(New("first"), New("second"), New("third"))
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "first" {
+		t.Errorf("expected root 'first', got '%s'", result.Message())
+	}
+	full := result.Error()
+	idx1 := strings.Index(full, "first")
+	idx2 := strings.Index(full, "second")
+	idx3 := strings.Index(full, "third")
+	if idx1 < 0 || idx2 < 0 || idx3 < 0 {
+		t.Fatalf("expected all messages in chain output, got: %s", full)
+	}
+	if !(idx1 < idx2 && idx2 < idx3) {
+		t.Errorf("expected order first < second < third, got positions %d %d %d", idx1, idx2, idx3)
+	}
+}
+
+func TestChain_IsRecognizesAnyNode(t *testing.T) {
+	target := TargetWithMessage("second")
+	result := Chain(New("first"), New("second"), New("third"))
+	if !Is(result, target) {
+		t.Error("expected Is to find 'second' anywhere in the chain")
+	}
+}
+
+func TestChainFromSlice_Nil(t *testing.T) {
+	if ChainFromSlice(nil) != nil {
+		t.Error("expected nil for nil slice")
+	}
+}
+
+func TestChainFromSlice_Empty(t *testing.T) {
+	if ChainFromSlice([]error{}) != nil {
+		t.Error("expected nil for empty slice")
+	}
+}
+
+func TestChainFromSlice_Order(t *testing.T) {
+	errs := []error{New("a"), New("b"), New("c")}
+	result := ChainFromSlice(errs)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "a" {
+		t.Errorf("expected root 'a', got '%s'", result.Message())
+	}
+	full := result.Error()
+	if !strings.Contains(full, "b") || !strings.Contains(full, "c") {
+		t.Errorf("expected 'b' and 'c' in chain output, got: %s", full)
+	}
+}
+
+func TestChainFromSlice_CompatibleWithInheritFromSlice(t *testing.T) {
+	errs := []error{New("x"), New("y")}
+	fromChain := ChainFromSlice(errs)
+	fromInherit := InheritFromSlice(errs)
+	// both should produce the same root message and chain depth
+	if fromChain.Message() != fromInherit.Message() {
+		t.Errorf("expected same root message: chain=%s inherit=%s", fromChain.Message(), fromInherit.Message())
+	}
+}
+
+// --- InheritFromSlice ---
+
+func TestInheritFromSlice_Nil(t *testing.T) {
+	if InheritFromSlice(nil, "msg") != nil {
+		t.Error("expected nil for nil slice")
+	}
+}
+
+func TestInheritFromSlice_Empty(t *testing.T) {
+	if InheritFromSlice([]error{}, "msg") != nil {
+		t.Error("expected nil for empty slice")
+	}
+}
+
+func TestInheritFromSlice_MessageSet(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	result := InheritFromSlice(errs, "root message")
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.Message() != "root message" {
+		t.Errorf("expected 'root message', got '%s'", result.Message())
+	}
+}
+
+func TestInheritFromSlice_EmptyMsgFallsBackToChain(t *testing.T) {
+	errs := []error{New("first error"), New("second error")}
+	result := InheritFromSlice(errs)
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	// without msg, the chain itself is returned — root is the first error
+	if result.Message() != "first error" {
+		t.Errorf("expected 'first error', got '%s'", result.Message())
+	}
+	// no synthetic wrapper: parent holds the remaining chain
+	if result.parent == nil {
+		t.Error("expected parent to be set (second error in chain)")
+	}
+}
+
+func TestInheritFromSlice_ChainPreservesOrder(t *testing.T) {
+	errs := []error{New("err1"), New("err2"), New("err3")}
+	result := InheritFromSlice(errs, "root")
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	// a cadeia de parent deve conter todos os erros na ordem
+	full := result.Error()
+	idx1 := strings.Index(full, "err1")
+	idx2 := strings.Index(full, "err2")
+	idx3 := strings.Index(full, "err3")
+	if idx1 < 0 || idx2 < 0 || idx3 < 0 {
+		t.Errorf("expected all errors in chain, got: %s", full)
+	}
+	if !(idx1 < idx2 && idx2 < idx3) {
+		t.Errorf("expected order err1 < err2 < err3 in chain, got positions %d %d %d", idx1, idx2, idx3)
+	}
+}
+
+func TestInheritFromSlice_SingleError(t *testing.T) {
+	errs := []error{New("only one")}
+	result := InheritFromSlice(errs, "root")
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.Message() != "root" {
+		t.Errorf("expected 'root', got '%s'", result.Message())
+	}
+	if result.parent == nil {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestInheritFromSlice_IsRecognizesChildError(t *testing.T) {
+	target := TargetWithMessage("err2")
+	errs := []error{New("err1"), New("err2"), New("err3")}
+	result := InheritFromSlice(errs, "root")
+	// Is deve encontrar err2 na cadeia via Error()
+	if !Is(result, target) {
+		t.Error("expected Is to find 'err2' inside the inherited chain")
+	}
+}
+
+func TestInheritFromSlice_WrapReturnsErr(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSlice(errs, "root")
+	wrapped := Wrap(result)
+	if wrapped == nil {
+		t.Error("expected Wrap to return non-nil")
+	}
+	if wrapped.Message() != "root" {
+		t.Errorf("expected 'root', got '%s'", wrapped.Message())
+	}
+}
+
+// --- InheritFromSlicef ---
+
+func TestInheritFromSlicef_Nil(t *testing.T) {
+	if InheritFromSlicef(nil, "fmt %s", "x") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSlicef(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSlicef(errs, "root %d errors", 2)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "root 2 errors" {
+		t.Errorf("expected 'root 2 errors', got '%s'", result.Message())
+	}
+}
+
+// --- InheritFromSliceWithCode ---
+
+func TestInheritFromSliceWithCode_Nil(t *testing.T) {
+	if InheritFromSliceWithCode(nil, "C1", "msg") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithCode(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithCode(errs, "UPLOAD_ERR", "upload failed")
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Code() != "UPLOAD_ERR" {
+		t.Errorf("expected code 'UPLOAD_ERR', got '%s'", result.Code())
+	}
+	if result.Message() != "upload failed" {
+		t.Errorf("expected 'upload failed', got '%s'", result.Message())
+	}
+}
+
+func TestInheritFromSliceWithCode_IsRecognizedByCode(t *testing.T) {
+	target := TargetWithCode("UPLOAD_ERR")
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithCode(errs, "UPLOAD_ERR", "upload failed")
+	if !Is(result, target) {
+		t.Error("expected Is to match by code")
+	}
+}
+
+// --- InheritFromSliceWithCodef ---
+
+func TestInheritFromSliceWithCodef_Nil(t *testing.T) {
+	if InheritFromSliceWithCodef(nil, "C1", "fmt %s", "x") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithCodef(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithCodef(errs, "C1", "failed %d files", 2)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Code() != "C1" {
+		t.Errorf("expected code 'C1', got '%s'", result.Code())
+	}
+	if result.Message() != "failed 2 files" {
+		t.Errorf("expected 'failed 2 files', got '%s'", result.Message())
+	}
+}
+
+// --- InheritFromSliceWithAll ---
+
+func TestInheritFromSliceWithAll_Nil(t *testing.T) {
+	if InheritFromSliceWithAll(nil, 1, "C1", nil, "msg") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithAll(t *testing.T) {
+	meta := map[string]any{"bucket": "manas-social"}
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithAll(errs, 1, "C1", meta, "upload failed")
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Code() != "C1" {
+		t.Errorf("expected code 'C1', got '%s'", result.Code())
+	}
+	if result.Metadata()["bucket"] != "manas-social" {
+		t.Error("expected metadata bucket=manas-social")
+	}
+}
+
+// --- InheritFromSliceWithAllf ---
+
+func TestInheritFromSliceWithAllf_Nil(t *testing.T) {
+	if InheritFromSliceWithAllf(nil, 1, "C1", nil, "fmt %s", "x") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithAllf(t *testing.T) {
+	meta := map[string]any{"count": 3}
+	errs := []error{New("a"), New("b"), New("c")}
+	result := InheritFromSliceWithAllf(errs, 1, "C1", meta, "failed %d uploads", 3)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "failed 3 uploads" {
+		t.Errorf("expected 'failed 3 uploads', got '%s'", result.Message())
+	}
+}
+
+// --- InheritFromSliceWithSkipCaller ---
+
+func TestInheritFromSliceWithSkipCaller_Nil(t *testing.T) {
+	if InheritFromSliceWithSkipCaller(nil, 1, "msg") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithSkipCaller(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithSkipCaller(errs, 1, "root")
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "root" {
+		t.Errorf("expected 'root', got '%s'", result.Message())
+	}
+}
+
+// --- InheritFromSliceWithSkipCallerf ---
+
+func TestInheritFromSliceWithSkipCallerf_Nil(t *testing.T) {
+	if InheritFromSliceWithSkipCallerf(nil, 1, "fmt %s", "x") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithSkipCallerf(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithSkipCallerf(errs, 1, "root %s", "msg")
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Message() != "root msg" {
+		t.Errorf("expected 'root msg', got '%s'", result.Message())
+	}
+}
+
+// --- InheritFromSliceWithSkipCallerAndCode ---
+
+func TestInheritFromSliceWithSkipCallerAndCode_Nil(t *testing.T) {
+	if InheritFromSliceWithSkipCallerAndCode(nil, 1, "C1", "msg") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithSkipCallerAndCode(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithSkipCallerAndCode(errs, 1, "SC01", "root")
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Code() != "SC01" {
+		t.Errorf("expected code 'SC01', got '%s'", result.Code())
+	}
+}
+
+// --- InheritFromSliceWithSkipCallerAndCodef ---
+
+func TestInheritFromSliceWithSkipCallerAndCodef_Nil(t *testing.T) {
+	if InheritFromSliceWithSkipCallerAndCodef(nil, 1, "C1", "fmt %s", "x") != nil {
+		t.Error("expected nil")
+	}
+}
+
+func TestInheritFromSliceWithSkipCallerAndCodef(t *testing.T) {
+	errs := []error{New("a"), New("b")}
+	result := InheritFromSliceWithSkipCallerAndCodef(errs, 1, "SC01", "root %d", 42)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Code() != "SC01" {
+		t.Errorf("expected code 'SC01', got '%s'", result.Code())
+	}
+	if result.Message() != "root 42" {
+		t.Errorf("expected 'root 42', got '%s'", result.Message())
+	}
+}
 
 func TestExtract_PlainError(t *testing.T) {
 	plain := errors.New("plain error")

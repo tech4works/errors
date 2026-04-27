@@ -30,7 +30,7 @@ func Is(err, target error) bool {
 		if mErr.IsTarget() {
 			return false
 		}
-		errString = mErr.Snapshot()
+		errString = mErr.Error()
 	}
 
 	targetString := target.Error()
@@ -341,8 +341,163 @@ func InheritWithSkipCallerAndCodeAsSlice(err error, skipCaller int, code string,
 	return []error{InheritWithSkipCallerAndCode(err, skipCaller, code, msg...)}
 }
 
-func Join(errs []error, sep string) error {
-	return errors.New(JoinToString(errs, sep))
+// Chain builds an ordered parent chain from a variadic list of errors.
+// The first error is the root; each subsequent error becomes a deeper parent.
+// Returns nil if no errors are provided.
+func Chain(errs ...error) *Err {
+	return inheritChainFromSlice(errs)
+}
+
+// ChainFromSlice builds an ordered parent chain from a slice of errors.
+// The first error is the root; each subsequent error becomes a deeper parent.
+// Returns nil if the slice is empty.
+func ChainFromSlice(errs []error) *Err {
+	return inheritChainFromSlice(errs)
+}
+
+// InheritFromSlice builds an ordered parent chain from a slice of errors.
+// When msg is provided, a new root *Err wraps the chain with that message.
+// When msg is omitted, the chain itself is returned directly — the first error in the slice is the root.
+// Returns nil if the slice is empty.
+func InheritFromSlice(errs []error, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	chain := inheritChainFromSlice(errs)
+	if buildMessage(msg...) == "<empty>" {
+		return chain
+	}
+	e := NewWithSkipCaller(2, msg...)
+	e.parent = chain
+	return e
+}
+
+// InheritFromSlicef is the format-string variant of InheritFromSlice.
+func InheritFromSlicef(errs []error, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	e := NewWithSkipCallerf(2, format, msg...)
+	e.parent = inheritChainFromSlice(errs)
+	return e
+}
+
+// InheritFromSliceWithCode is the code variant of InheritFromSlice.
+// When msg is omitted, the chain is returned with the code applied to the root node.
+func InheritFromSliceWithCode(errs []error, code string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	chain := inheritChainFromSlice(errs)
+	if buildMessage(msg...) == "<empty>" {
+		chain.code = code
+		return chain
+	}
+	e := NewWithSkipCallerAndCode(2, code, msg...)
+	e.parent = chain
+	return e
+}
+
+// InheritFromSliceWithCodef is the code and format-string variant of InheritFromSlice.
+func InheritFromSliceWithCodef(errs []error, code, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	e := NewWithSkipCallerAndCodef(2, code, format, msg...)
+	e.parent = inheritChainFromSlice(errs)
+	return e
+}
+
+// InheritFromSliceWithAll is the skipCaller, code and metadata variant of InheritFromSlice.
+// When msg is omitted, the chain is returned with code and metadata applied to the root node.
+func InheritFromSliceWithAll(errs []error, skipCaller int, code string, metadata map[string]any, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	chain := inheritChainFromSlice(errs)
+	if buildMessage(msg...) == "<empty>" {
+		chain.code = code
+		chain.metadata = metadata
+		return chain
+	}
+	e := NewWithAll(skipCaller+1, code, metadata, msg...)
+	e.parent = chain
+	return e
+}
+
+// InheritFromSliceWithAllf is the skipCaller, code, metadata and format-string variant of InheritFromSlice.
+func InheritFromSliceWithAllf(errs []error, skipCaller int, code string, metadata map[string]any, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	e := NewWithAllf(skipCaller+1, code, metadata, format, msg...)
+	e.parent = inheritChainFromSlice(errs)
+	return e
+}
+
+// InheritFromSliceWithSkipCaller is the custom skipCaller variant of InheritFromSlice.
+// When msg is omitted, the chain itself is returned directly.
+func InheritFromSliceWithSkipCaller(errs []error, skipCaller int, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	chain := inheritChainFromSlice(errs)
+	if buildMessage(msg...) == "<empty>" {
+		return chain
+	}
+	e := NewWithSkipCaller(skipCaller+1, msg...)
+	e.parent = chain
+	return e
+}
+
+// InheritFromSliceWithSkipCallerf is the skipCaller and format-string variant of InheritFromSlice.
+func InheritFromSliceWithSkipCallerf(errs []error, skipCaller int, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	e := NewWithSkipCallerf(skipCaller+1, format, msg...)
+	e.parent = inheritChainFromSlice(errs)
+	return e
+}
+
+// InheritFromSliceWithSkipCallerAndCode is the skipCaller and code variant of InheritFromSlice.
+// When msg is omitted, the chain is returned with the code applied to the root node.
+func InheritFromSliceWithSkipCallerAndCode(errs []error, skipCaller int, code string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	chain := inheritChainFromSlice(errs)
+	if buildMessage(msg...) == "<empty>" {
+		chain.code = code
+		return chain
+	}
+	e := NewWithSkipCallerAndCode(skipCaller+1, code, msg...)
+	e.parent = chain
+	return e
+}
+
+// InheritFromSliceWithSkipCallerAndCodef is the skipCaller, code and format-string variant of InheritFromSlice.
+func InheritFromSliceWithSkipCallerAndCodef(errs []error, skipCaller int, code, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	e := NewWithSkipCallerAndCodef(skipCaller+1, code, format, msg...)
+	e.parent = inheritChainFromSlice(errs)
+	return e
+}
+
+func Join(errs []error, sep string) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  JoinToString(errs, sep),
+		stack:    buildDebugStack(),
+	}
 }
 
 func JoinInherit(errs []error, sep string, msg ...any) error {
@@ -413,6 +568,8 @@ func JoinInheritWithSkipCallerAndCode(errs []error, sep string, skipCaller int, 
 	return InheritWithSkipCallerAndCode(Join(errs, sep), skipCaller, code, msg...)
 }
 
+// JoinToString concatena as mensagens dos erros da fatia separadas por sep.
+// Erros nil ou sem mensagem são ignorados silenciosamente.
 func JoinToString(errs []error, sep string) (result string) {
 	if len(errs) == 0 {
 		return ""
@@ -489,4 +646,20 @@ func isValidAsTarget(target any) bool {
 	elem := rv.Type().Elem()
 	errorType := reflect.TypeOf((*error)(nil)).Elem()
 	return elem.Implements(errorType) || elem.Kind() == reflect.Interface
+}
+
+// inheritChainFromSlice builds a parent chain from a slice of errors.
+// The first error in the slice sits at the top of the chain; the last is the deepest parent.
+// Returns nil if the slice is empty.
+func inheritChainFromSlice(errs []error) *Err {
+	if len(errs) == 0 {
+		return nil
+	}
+	_, chain := extract(errs[len(errs)-1], 3)
+	for i := len(errs) - 2; i >= 0; i-- {
+		_, node := extract(errs[i], 3)
+		node.parent = chain
+		chain = node
+	}
+	return chain
 }

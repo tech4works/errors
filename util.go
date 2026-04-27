@@ -269,7 +269,7 @@ func filterMsg(v ...any) []any {
 				continue
 			}
 		}
-		result[i] = toString(iv)
+		result[i] = iv
 	}
 	return result
 }
