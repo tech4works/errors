@@ -151,6 +151,18 @@ func WrapWithExtracted(err error) (bool, *Err) {
 	return extract(err, 3)
 }
 
+func Parse(v any) (*Err, error) {
+	if v == nil {
+		return nil, nil
+	}
+	s, err := toStringWithErr(v)
+	if err != nil {
+		return nil, err
+	}
+	_, e := extract(errors.New(s), 3)
+	return e, nil
+}
+
 func Inherit(err error, msg ...any) *Err {
 	if err == nil {
 		return nil
