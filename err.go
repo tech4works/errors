@@ -582,6 +582,52 @@ func (e *Err) Metadata() map[string]any {
 	return e.metadata
 }
 
+func (e *Err) HasParent() bool {
+	return e.parent != nil
+}
+
+func (e *Err) Parent() *Err {
+	return e.parent
+}
+
+// Chain returns the full parent chain as a slice of *Err.
+// The first element is the direct parent, the last is the deepest ancestor.
+// Returns nil if there is no parent.
+func (e *Err) Chain() []*Err {
+	var chain []*Err
+	for cur := e.parent; cur != nil; cur = cur.parent {
+		chain = append(chain, cur)
+	}
+	return chain
+}
+
+// RootCause returns the deepest ancestor in the parent chain.
+// If there is no parent, returns the receiver itself.
+func (e *Err) RootCause() *Err {
+	cur := e
+	for cur.parent != nil {
+		cur = cur.parent
+	}
+	return cur
+}
+
+// ChainAt returns the parent at the given index in the chain.
+// Index 0 is the direct parent, 1 is the grandparent, and so on.
+// Panics if the index is out of range.
+func (e *Err) ChainAt(index int) *Err {
+	return e.Chain()[index]
+}
+
+// ChainLen returns the number of parents in the chain.
+// Returns 0 if there is no parent.
+func (e *Err) ChainLen() int {
+	n := 0
+	for cur := e.parent; cur != nil; cur = cur.parent {
+		n++
+	}
+	return n
+}
+
 func (e *Err) Stack() string {
 	stack := renderStackByPolicy(e.stack)
 	if e.parent != nil {

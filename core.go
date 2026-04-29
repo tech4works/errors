@@ -12,11 +12,16 @@ import (
 const regex = `^(?:\[CODE]: (.+?) )?` + // 1: code (optional)
 	`\[CAUSE]: \(([^:]+):(\d+)\) ([^:]+): (.+?)` + // 2: file, 3: line, 4: func, 5: msg
 	`(?: \[METADATA]: (.+?))?` + // 6: metadata (optional)
-	` \[STACK]:\s*([\s\S]+)$` // 7: stack
+	` \[STACK]:\s*([\s\S]+)` // 7: stack
+
+const snapshotRegex = `^\[CODE]: (.+?) \[MESSAGE]: (.+)$`
 
 const inheritSep = "----------------\n\t\t|\t[INHERITED BY]: "
 
-var compiledRegex = regexp.MustCompile(regex)
+var (
+	compiledRegex         = regexp.MustCompile(regex)
+	compiledSnapshotRegex = regexp.MustCompile(snapshotRegex)
+)
 
 func Is(err, target error) bool {
 	if err == nil || target == nil {
@@ -610,12 +615,17 @@ func extract(err error, skipCaller int) (bool, *Err) {
 		}
 	}
 
+	stackRaw := matches[7]
+
+	// Separate the own stack from any [INHERITED BY] blocks
+	ownStack, inheritedParts := splitInheritedBlocks(stackRaw)
+
 	e = &Err{
 		file:     matches[2],
 		line:     matches[3],
 		funcName: matches[4],
 		message:  matches[5],
-		stack:    []byte(matches[7]),
+		stack:    []byte(ownStack),
 	}
 
 	if matches[1] != "" {
@@ -635,7 +645,94 @@ func extract(err error, skipCaller int) (bool, *Err) {
 		}
 	}
 
+	// Try to extract a nested error from the message (snapshot format: [CODE]: X [MESSAGE]: Y)
+	if nested := parseSnapshotFromMessage(e.message); nested != nil {
+		e.message = nested.message
+		if nested.code != "" && e.code == "" {
+			e.code = nested.code
+		}
+		if nested.code != "" && e.code != nested.code {
+			// The message contained a different code — preserve it as a parent
+			nested.file = e.file
+			nested.line = e.line
+			nested.funcName = e.funcName
+			nested.stack = e.stack
+			e.parent = chainParents(nested, inheritedParts)
+			return true, e
+		}
+	}
+
+	// Build parent chain from [INHERITED BY] blocks
+	e.parent = chainParents(nil, inheritedParts)
+
 	return true, e
+}
+
+// parseSnapshotFromMessage checks if a message contains a snapshot pattern
+// like "[CODE]: X [MESSAGE]: Y" and extracts it into an Err with code and message.
+func parseSnapshotFromMessage(msg string) *Err {
+	m := compiledSnapshotRegex.FindStringSubmatch(msg)
+	if len(m) == 0 {
+		return nil
+	}
+	return &Err{
+		code:    m[1],
+		message: m[2],
+	}
+}
+
+// splitInheritedBlocks splits a stack string at each [INHERITED BY] separator,
+// returning the own stack (before the first separator) and a slice of the
+// inherited error strings (each one is a full Error() representation).
+func splitInheritedBlocks(stack string) (string, []string) {
+	sep := "----------------\n\t\t|\t[INHERITED BY]: "
+	parts := strings.SplitN(stack, sep, 2)
+	if len(parts) == 1 {
+		return stack, nil
+	}
+
+	ownStack := parts[0]
+	rest := parts[1]
+
+	var inherited []string
+	for {
+		idx := strings.Index(rest, sep)
+		if idx < 0 {
+			inherited = append(inherited, rest)
+			break
+		}
+		inherited = append(inherited, rest[:idx])
+		rest = rest[idx+len(sep):]
+	}
+
+	return ownStack, inherited
+}
+
+// chainParents builds a linked parent chain from an optional head Err and
+// a slice of inherited error strings. Each string is parsed via extract.
+func chainParents(head *Err, inheritedParts []string) *Err {
+	// Parse all inherited parts into Err nodes
+	var nodes []*Err
+	if head != nil {
+		nodes = append(nodes, head)
+	}
+	for _, part := range inheritedParts {
+		_, parsed := extract(errors.New(part), 3)
+		if parsed != nil {
+			nodes = append(nodes, parsed)
+		}
+	}
+
+	if len(nodes) == 0 {
+		return nil
+	}
+
+	// Link them: first is the direct parent, last is the deepest ancestor
+	for i := 0; i < len(nodes)-1; i++ {
+		nodes[i].parent = nodes[i+1]
+	}
+
+	return nodes[0]
 }
 
 func isValidAsTarget(target any) bool {
