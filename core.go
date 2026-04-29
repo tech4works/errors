@@ -144,6 +144,13 @@ func Wrap(err error) *Err {
 	return e
 }
 
+func WrapWithExtracted(err error) (bool, *Err) {
+	if err == nil {
+		return false, nil
+	}
+	return extract(err, 3)
+}
+
 func Inherit(err error, msg ...any) *Err {
 	if err == nil {
 		return nil
