@@ -359,6 +359,38 @@ func NewByParentWithCodeAndMetadataf(parent error, code string, metadata map[str
 	}
 }
 
+func NewByParentAsSlice(parent error, msg ...any) []error {
+	return []error{NewByParent(parent, msg...)}
+}
+
+func NewByParentAsSlicef(parent error, format string, msg ...any) []error {
+	return []error{NewByParentf(parent, format, msg...)}
+}
+
+func NewByParentWithCodeAsSlice(parent error, code string, msg ...any) []error {
+	return []error{NewByParentWithCode(parent, code, msg...)}
+}
+
+func NewByParentWithCodeAsSlicef(parent error, code, format string, msg ...any) []error {
+	return []error{NewByParentWithCodef(parent, code, format, msg...)}
+}
+
+func NewByParentWithMetadataAsSlice(parent error, metadata map[string]any, msg ...any) []error {
+	return []error{NewByParentWithMetadata(parent, metadata, msg...)}
+}
+
+func NewByParentWithMetadataAsSlicef(parent error, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewByParentWithMetadataf(parent, metadata, format, msg...)}
+}
+
+func NewByParentWithCodeAndMetadataAsSlice(parent error, code string, metadata map[string]any, msg ...any) []error {
+	return []error{NewByParentWithCodeAndMetadata(parent, code, metadata, msg...)}
+}
+
+func NewByParentWithCodeAndMetadataAsSlicef(parent error, code string, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewByParentWithCodeAndMetadataf(parent, code, metadata, format, msg...)}
+}
+
 func NewByChain(errs []error, msg ...any) *Err {
 	if len(errs) == 0 {
 		return New(msg...)

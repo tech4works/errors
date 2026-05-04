@@ -1065,3 +1065,183 @@ func TestNewByChainWithCodeAndMetadataAsSlicef(t *testing.T) {
 		t.Error("expected parent chain to be set")
 	}
 }
+
+func TestNewByParentAsSlice(t *testing.T) {
+	parent := New("parent error")
+	result := NewByParentAsSlice(parent, "child error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", e.Message())
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentAsSlice_NilParent(t *testing.T) {
+	result := NewByParentAsSlice(nil, "child error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.HasParent() {
+		t.Error("expected no parent when parent is nil")
+	}
+}
+
+func TestNewByParentAsSlicef(t *testing.T) {
+	parent := New("parent error")
+	result := NewByParentAsSlicef(parent, "child %s", "error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", e.Message())
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentWithCodeAsSlice(t *testing.T) {
+	parent := New("parent error")
+	result := NewByParentWithCodeAsSlice(parent, "ERR_CODE", "child error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", e.Code())
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentWithCodeAsSlicef(t *testing.T) {
+	parent := New("parent error")
+	result := NewByParentWithCodeAsSlicef(parent, "ERR_CODE", "child %s", "error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", e.Code())
+	}
+	if e.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", e.Message())
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentWithMetadataAsSlice(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	result := NewByParentWithMetadataAsSlice(parent, metadata, "child error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if !e.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if e.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", e.Metadata()["key"])
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentWithMetadataAsSlicef(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	result := NewByParentWithMetadataAsSlicef(parent, metadata, "child %s", "error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", e.Message())
+	}
+	if !e.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentWithCodeAndMetadataAsSlice(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	result := NewByParentWithCodeAndMetadataAsSlice(parent, "ERR_CODE", metadata, "child error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", e.Code())
+	}
+	if !e.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
+
+func TestNewByParentWithCodeAndMetadataAsSlicef(t *testing.T) {
+	parent := New("parent error")
+	metadata := map[string]any{"key": "value"}
+	result := NewByParentWithCodeAndMetadataAsSlicef(parent, "ERR_CODE", metadata, "child %s", "error")
+	if len(result) != 1 {
+		t.Fatalf("expected slice of length 1, got %d", len(result))
+	}
+	var e *Err
+	if !As(result[0], &e) {
+		t.Fatal("expected result to be *Err")
+	}
+	if e.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", e.Code())
+	}
+	if e.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", e.Message())
+	}
+	if !e.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if !e.HasParent() {
+		t.Error("expected parent to be set")
+	}
+}
