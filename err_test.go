@@ -603,3 +603,285 @@ func TestNewByParentWithCodeAndMetadataf(t *testing.T) {
 		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
 	}
 }
+
+func TestNewByChain(t *testing.T) {
+	errs := []error{New("err1"), New("err2"), New("err3")}
+	child := NewByChain(errs, "child error")
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if child.ChainLen() != 3 {
+		t.Errorf("expected chain length 3, got %d", child.ChainLen())
+	}
+	if child.HasCode() {
+		t.Error("expected no code")
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata")
+	}
+}
+
+func TestNewByChain_EmptySlice(t *testing.T) {
+	child := NewByChain(nil, "child error")
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainf(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	child := NewByChainf(errs, "child %s", "error")
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if child.ChainLen() != 2 {
+		t.Errorf("expected chain length 2, got %d", child.ChainLen())
+	}
+	if child.HasCode() {
+		t.Error("expected no code")
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata")
+	}
+}
+
+func TestNewByChainf_EmptySlice(t *testing.T) {
+	child := NewByChainf(nil, "child %s", "error")
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainWithCode(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	child := NewByChainWithCode(errs, "ERR_CODE", "child error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if child.ChainLen() != 2 {
+		t.Errorf("expected chain length 2, got %d", child.ChainLen())
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata")
+	}
+}
+
+func TestNewByChainWithCode_EmptySlice(t *testing.T) {
+	child := NewByChainWithCode(nil, "ERR_CODE", "child error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainWithCodef(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	child := NewByChainWithCodef(errs, "ERR_CODE", "child %s", "error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if child.HasMetadata() {
+		t.Error("expected no metadata")
+	}
+}
+
+func TestNewByChainWithCodef_EmptySlice(t *testing.T) {
+	child := NewByChainWithCodef(nil, "ERR_CODE", "child %s", "error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainWithMetadata(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithMetadata(errs, metadata, "child error")
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+	if child.HasCode() {
+		t.Error("expected no code")
+	}
+}
+
+func TestNewByChainWithMetadata_EmptySlice(t *testing.T) {
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithMetadata(nil, metadata, "child error")
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainWithMetadataf(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithMetadataf(errs, metadata, "child %s", "error")
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+	if child.HasCode() {
+		t.Error("expected no code")
+	}
+}
+
+func TestNewByChainWithMetadataf_EmptySlice(t *testing.T) {
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithMetadataf(nil, metadata, "child %s", "error")
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainWithCodeAndMetadata(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithCodeAndMetadata(errs, "ERR_CODE", metadata, "child error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+}
+
+func TestNewByChainWithCodeAndMetadata_EmptySlice(t *testing.T) {
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithCodeAndMetadata(nil, "ERR_CODE", metadata, "child error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChainWithCodeAndMetadataf(t *testing.T) {
+	errs := []error{New("err1"), New("err2")}
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithCodeAndMetadataf(errs, "ERR_CODE", metadata, "child %s", "error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if child.Message() != "child error" {
+		t.Errorf("expected message 'child error', got '%s'", child.Message())
+	}
+	if !child.HasParent() {
+		t.Error("expected parent chain to be set")
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.Metadata()["key"] != "value" {
+		t.Errorf("expected metadata key 'value', got '%v'", child.Metadata()["key"])
+	}
+}
+
+func TestNewByChainWithCodeAndMetadataf_EmptySlice(t *testing.T) {
+	metadata := map[string]any{"key": "value"}
+	child := NewByChainWithCodeAndMetadataf(nil, "ERR_CODE", metadata, "child %s", "error")
+	if child.Code() != "ERR_CODE" {
+		t.Errorf("expected code 'ERR_CODE', got '%s'", child.Code())
+	}
+	if !child.HasMetadata() {
+		t.Error("expected metadata to be set")
+	}
+	if child.HasParent() {
+		t.Error("expected no parent when slice is empty")
+	}
+}
+
+func TestNewByChain_ChainOrder(t *testing.T) {
+	err1 := NewWithCode("CODE1", "first")
+	err2 := NewWithCode("CODE2", "second")
+	err3 := NewWithCode("CODE3", "third")
+	child := NewByChain([]error{err1, err2, err3}, "wrapper")
+
+	chain := child.Chain()
+	if len(chain) != 3 {
+		t.Fatalf("expected 3 parents in chain, got %d", len(chain))
+	}
+	if chain[0].Message() != "first" {
+		t.Errorf("expected first parent message 'first', got '%s'", chain[0].Message())
+	}
+	if chain[1].Message() != "second" {
+		t.Errorf("expected second parent message 'second', got '%s'", chain[1].Message())
+	}
+	if chain[2].Message() != "third" {
+		t.Errorf("expected third parent message 'third', got '%s'", chain[2].Message())
+	}
+}
+
+func TestNewByChain_IsRecognizesChainNode(t *testing.T) {
+	target := NewWithCode("DEEP_ERR", "deep error")
+	errs := []error{New("shallow"), target}
+	child := NewByChain(errs, "wrapper")
+
+	if !Is(child, TargetWithCode("DEEP_ERR")) {
+		t.Error("expected Is to recognize code from chain node")
+	}
+}

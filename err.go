@@ -359,6 +359,134 @@ func NewByParentWithCodeAndMetadataf(parent error, code string, metadata map[str
 	}
 }
 
+func NewByChain(errs []error, msg ...any) *Err {
+	if len(errs) == 0 {
+		return New(msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainf(errs []error, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return Newf(format, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithCode(errs []error, code string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithCode(code, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithCodef(errs []error, code, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithCodef(code, format, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithMetadata(errs []error, metadata map[string]any, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithMetadata(metadata, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessage(msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithMetadataf(errs []error, metadata map[string]any, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithMetadataf(metadata, format, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithCodeAndMetadata(errs []error, code string, metadata map[string]any, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithCodeAndMetadata(code, metadata, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithCodeAndMetadataf(errs []error, code string, metadata map[string]any, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithCodeAndMetadataf(code, metadata, format, msg...)
+	}
+	file, line, funcName := callerInfos(1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
 func NewAsSlice(msg ...any) []error {
 	return []error{NewWithSkipCaller(1, msg...)}
 }
