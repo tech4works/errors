@@ -487,6 +487,38 @@ func NewByChainWithCodeAndMetadataf(errs []error, code string, metadata map[stri
 	}
 }
 
+func NewByChainAsSlice(errs []error, msg ...any) []error {
+	return []error{NewByChain(errs, msg...)}
+}
+
+func NewByChainAsSlicef(errs []error, format string, msg ...any) []error {
+	return []error{NewByChainf(errs, format, msg...)}
+}
+
+func NewByChainWithCodeAsSlice(errs []error, code string, msg ...any) []error {
+	return []error{NewByChainWithCode(errs, code, msg...)}
+}
+
+func NewByChainWithCodeAsSlicef(errs []error, code, format string, msg ...any) []error {
+	return []error{NewByChainWithCodef(errs, code, format, msg...)}
+}
+
+func NewByChainWithMetadataAsSlice(errs []error, metadata map[string]any, msg ...any) []error {
+	return []error{NewByChainWithMetadata(errs, metadata, msg...)}
+}
+
+func NewByChainWithMetadataAsSlicef(errs []error, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewByChainWithMetadataf(errs, metadata, format, msg...)}
+}
+
+func NewByChainWithCodeAndMetadataAsSlice(errs []error, code string, metadata map[string]any, msg ...any) []error {
+	return []error{NewByChainWithCodeAndMetadata(errs, code, metadata, msg...)}
+}
+
+func NewByChainWithCodeAndMetadataAsSlicef(errs []error, code string, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewByChainWithCodeAndMetadataf(errs, code, metadata, format, msg...)}
+}
+
 func NewAsSlice(msg ...any) []error {
 	return []error{NewWithSkipCaller(1, msg...)}
 }
