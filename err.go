@@ -359,6 +359,102 @@ func NewByParentWithCodeAndMetadataf(parent error, code string, metadata map[str
 	}
 }
 
+func NewByParentWithSkipCaller(parent error, skipCaller int, msg ...any) *Err {
+	if parent == nil {
+		return NewWithSkipCaller(skipCaller+1, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   Wrap(parent),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithSkipCallerf(parent error, skipCaller int, format string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithSkipCallerf(skipCaller+1, format, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   Wrap(parent),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithSkipCallerAndCode(parent error, skipCaller int, code string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithSkipCallerAndCode(skipCaller+1, code, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   Wrap(parent),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithSkipCallerAndCodef(parent error, skipCaller int, code, format string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithSkipCallerAndCodef(skipCaller+1, code, format, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   Wrap(parent),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithAll(parent error, skipCaller int, code string, metadata map[string]any, msg ...any) *Err {
+	if parent == nil {
+		return NewWithAll(skipCaller+1, code, metadata, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   Wrap(parent),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByParentWithAllf(parent error, skipCaller int, code string, metadata map[string]any, format string, msg ...any) *Err {
+	if parent == nil {
+		return NewWithAllf(skipCaller+1, code, metadata, format, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   Wrap(parent),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
 func NewByParentAsSlice(parent error, msg ...any) []error {
 	return []error{NewByParent(parent, msg...)}
 }
@@ -389,6 +485,30 @@ func NewByParentWithCodeAndMetadataAsSlice(parent error, code string, metadata m
 
 func NewByParentWithCodeAndMetadataAsSlicef(parent error, code string, metadata map[string]any, format string, msg ...any) []error {
 	return []error{NewByParentWithCodeAndMetadataf(parent, code, metadata, format, msg...)}
+}
+
+func NewByParentWithSkipCallerAsSlice(parent error, skipCaller int, msg ...any) []error {
+	return []error{NewByParentWithSkipCaller(parent, skipCaller, msg...)}
+}
+
+func NewByParentWithSkipCallerAsSlicef(parent error, skipCaller int, format string, msg ...any) []error {
+	return []error{NewByParentWithSkipCallerf(parent, skipCaller, format, msg...)}
+}
+
+func NewByParentWithSkipCallerAndCodeAsSlice(parent error, skipCaller int, code string, msg ...any) []error {
+	return []error{NewByParentWithSkipCallerAndCode(parent, skipCaller, code, msg...)}
+}
+
+func NewByParentWithSkipCallerAndCodeAsSlicef(parent error, skipCaller int, code, format string, msg ...any) []error {
+	return []error{NewByParentWithSkipCallerAndCodef(parent, skipCaller, code, format, msg...)}
+}
+
+func NewByParentWithAllAsSlice(parent error, skipCaller int, code string, metadata map[string]any, msg ...any) []error {
+	return []error{NewByParentWithAll(parent, skipCaller, code, metadata, msg...)}
+}
+
+func NewByParentWithAllAsSlicef(parent error, skipCaller int, code string, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewByParentWithAllf(parent, skipCaller, code, metadata, format, msg...)}
 }
 
 func NewByChain(errs []error, msg ...any) *Err {
@@ -519,6 +639,102 @@ func NewByChainWithCodeAndMetadataf(errs []error, code string, metadata map[stri
 	}
 }
 
+func NewByChainWithSkipCaller(errs []error, skipCaller int, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithSkipCaller(skipCaller+1, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithSkipCallerf(errs []error, skipCaller int, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithSkipCallerf(skipCaller+1, format, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithSkipCallerAndCode(errs []error, skipCaller int, code string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithSkipCallerAndCode(skipCaller+1, code, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithSkipCallerAndCodef(errs []error, skipCaller int, code, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithSkipCallerAndCodef(skipCaller+1, code, format, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithAll(errs []error, skipCaller int, code string, metadata map[string]any, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithAll(skipCaller+1, code, metadata, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessage(msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
+func NewByChainWithAllf(errs []error, skipCaller int, code string, metadata map[string]any, format string, msg ...any) *Err {
+	if len(errs) == 0 {
+		return NewWithAllf(skipCaller+1, code, metadata, format, msg...)
+	}
+	file, line, funcName := callerInfos(skipCaller + 1)
+	return &Err{
+		parent:   inheritChainFromSlice(errs),
+		file:     file,
+		line:     line,
+		funcName: funcName,
+		code:     code,
+		message:  buildMessageByFormat(format, msg...),
+		metadata: metadata,
+		stack:    buildDebugStack(),
+	}
+}
+
 func NewByChainAsSlice(errs []error, msg ...any) []error {
 	return []error{NewByChain(errs, msg...)}
 }
@@ -549,6 +765,30 @@ func NewByChainWithCodeAndMetadataAsSlice(errs []error, code string, metadata ma
 
 func NewByChainWithCodeAndMetadataAsSlicef(errs []error, code string, metadata map[string]any, format string, msg ...any) []error {
 	return []error{NewByChainWithCodeAndMetadataf(errs, code, metadata, format, msg...)}
+}
+
+func NewByChainWithSkipCallerAsSlice(errs []error, skipCaller int, msg ...any) []error {
+	return []error{NewByChainWithSkipCaller(errs, skipCaller, msg...)}
+}
+
+func NewByChainWithSkipCallerAsSlicef(errs []error, skipCaller int, format string, msg ...any) []error {
+	return []error{NewByChainWithSkipCallerf(errs, skipCaller, format, msg...)}
+}
+
+func NewByChainWithSkipCallerAndCodeAsSlice(errs []error, skipCaller int, code string, msg ...any) []error {
+	return []error{NewByChainWithSkipCallerAndCode(errs, skipCaller, code, msg...)}
+}
+
+func NewByChainWithSkipCallerAndCodeAsSlicef(errs []error, skipCaller int, code, format string, msg ...any) []error {
+	return []error{NewByChainWithSkipCallerAndCodef(errs, skipCaller, code, format, msg...)}
+}
+
+func NewByChainWithAllAsSlice(errs []error, skipCaller int, code string, metadata map[string]any, msg ...any) []error {
+	return []error{NewByChainWithAll(errs, skipCaller, code, metadata, msg...)}
+}
+
+func NewByChainWithAllAsSlicef(errs []error, skipCaller int, code string, metadata map[string]any, format string, msg ...any) []error {
+	return []error{NewByChainWithAllf(errs, skipCaller, code, metadata, format, msg...)}
 }
 
 func NewAsSlice(msg ...any) []error {
