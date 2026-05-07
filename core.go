@@ -71,6 +71,56 @@ func NotContainsCode(err error, code string) bool {
 	return !ContainsCode(err, code)
 }
 
+// ChainContainsCode verifica se o código informado existe em pelo menos um nó
+// da cadeia de erros (o próprio erro + todos os parents).
+func ChainContainsCode(err error, code string) bool {
+	if err == nil || code == "" {
+		return false
+	}
+
+	var e *Err
+	if !As(err, &e) {
+		return ContainsCode(err, code)
+	}
+
+	for cur := e; cur != nil; cur = cur.parent {
+		if cur.code == code {
+			return true
+		}
+	}
+	return false
+}
+
+// ChainNotContainsCode é a negação de ChainContainsCode.
+func ChainNotContainsCode(err error, code string) bool {
+	return !ChainContainsCode(err, code)
+}
+
+// ChainContains verifica se o target bate (via Is) com pelo menos um nó
+// da cadeia de erros (o próprio erro + todos os parents).
+func ChainContains(err, target error) bool {
+	if err == nil || target == nil {
+		return false
+	}
+
+	var e *Err
+	if !As(err, &e) {
+		return Is(err, target)
+	}
+
+	for cur := e; cur != nil; cur = cur.parent {
+		if Is(cur, target) {
+			return true
+		}
+	}
+	return false
+}
+
+// ChainNotContains é a negação de ChainContains.
+func ChainNotContains(err, target error) bool {
+	return !ChainContains(err, target)
+}
+
 func Contains(errs []error, target error) bool {
 	if len(errs) == 0 || target == nil {
 		return false
